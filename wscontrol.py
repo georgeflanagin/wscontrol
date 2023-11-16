@@ -36,6 +36,7 @@ import tomllib
 # From hpclib
 ###
 import linuxutils
+from   sloppytree import SloppyTree
 import sqlitedb
 from   sqlitedb import SQLiteDB
 from   urdecorators import trap
@@ -44,6 +45,7 @@ from   urlogger import URLogger, piddly
 ###
 # imports and objects that are a part of this project
 ###
+from wsconsole import WSConsole
 
 
 ###
@@ -78,9 +80,33 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     if not db.OK: 
         logger.error(f"unable to open {myargs.db}")
         sys.exit(os.EX_CONFIG)
+    logger.info(f"{myargs.db} is open.")
 
+    if not os.path.exists(myargs.config):
+        logger.error(f"{myargs.config} not found.")
+        sys.exit(os.EX_IOERR)
+
+    try:
+        config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
+        logger.info(f"{myargs.config} read.")
+
+    except tomllib.TOMLDecodeError as e:
+        logger.error(e)
+        sys.exit(os.EX_CONFIG)
     
+    console=WSConsole(config, db, logger)
+    try:
+        console.cmdloop(intro="Welcome to WSControl")
+    except KeyboardInterrupt as e:
+        print("You pressed control-C")
+        logger.info("Leaving via control-C")
+        sys.exit(os.EX_OK)
+
+    except Exception as e:
+        logger.error(e)
+        sys.exit(os.EX_IOERR)
     
+    logger.info("Normal termination.")
     return os.EX_OK
 
 
@@ -92,13 +118,13 @@ if __name__ == '__main__':
     database   = f"{here}/{progname}.db"
     logfile    = f"{here}/{progname}.log"
     
-    parser = argparse.ArgumentParser(prog="wscontrol", 
-        description="What wscontrol does, wscontrol does best.")
+    parser = argparse.ArgumentParser(prog=progname, 
+        description=f"What {progname} does, {progname} does best.")
 
     parser.add_argument('--db', type=str, default=database,
         help=f"Name of the wscontrol database, defaults to {database}")
 
-    parser.add_argument('-i', '--input', type=str, default=configfile,
+    parser.add_argument('--config', type=str, default=configfile,
         help=f"Input config file name, defaults to {configfile}")
 
     parser.add_argument('--loglevel', type=int,
