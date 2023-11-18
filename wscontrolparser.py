@@ -60,11 +60,12 @@ __license__ = 'MIT'
 
 
 class OpCode(IntEnum):
-    IGNORE = 0
     OK = 0
-    FAIL = 127
-    NEXT = 1
-    RETRY = 2
+
+    IGNORE = 8
+    FAIL = 9
+    NEXT = 10
+    RETRY = 11
 
     CAPTURE = 16
     FROM = 17
@@ -73,7 +74,6 @@ class OpCode(IntEnum):
     SEND = 20
     ONERROR = 21
     EXEC = 22
-
 
     NOP = 126
     STOP = 125
@@ -171,19 +171,20 @@ def exec_command():
 @generate
 def send_command():
     """
-    Example: send /some/file to all_workstations
+    Example: send /some/files/*.txt to all_workstations
     """
     yield lexeme('send')
     filename = yield string
     yield lexeme('to')
     destination = yield context
     error_action = optional(on_error_clause, ('ONERROR', 'fail'))
-    raise EndOfGenerator(('SEND', filename, destination, error_action))
+    raise EndOfGenerator((OpCode.SEND, filename, destination, error_action))
 
 
 stop_command = lexeme(string('stop')).result(OpCode.STOP)
 log_commmand = lexeme(string('log')).result(OpCode.LOG) + string
 
+wslanguage = stop_command ^ log_command ^ send_command ^ exec_command
 
 @trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> SloppyTree:
