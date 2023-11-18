@@ -59,22 +59,25 @@ __status__ = 'in progress'
 __license__ = 'MIT'
 
 
-class OPCODES(IntEnum):
-    OP_IGNORE = 0
-    OP_OK = 0
-    OP_FAIL = 128
-    OP_NEXT = 1
-    OP_RETRY = 2
+class OpCode(IntEnum):
+    IGNORE = 0
+    OK = 0
+    FAIL = 127
+    NEXT = 1
+    RETRY = 2
 
-    OP_CAPTURE = 16
-    OP_FROM = 17
-    OP_DO = 18
-    OP_ON = 19
-    OP_SEND = 20
+    CAPTURE = 16
+    FROM = 17
+    DO = 18
+    ON = 19
+    SEND = 20
+    ONERROR = 21
+    EXEC = 22
 
 
-    OP_STOP = 32
-    OP_LOG = 33
+    NOP = 126
+    STOP = 125
+    LOG = 124
 
 
 lparen = lexeme(string(LPAREN))
@@ -83,10 +86,11 @@ at_sign = lexeme(string(AT_SIGN))
 comma = lexeme(string(COMMA))
 
 login = string + at_sign + string
-action = ( lexeme(string('ignore')).result(0) | 
-            lexeme(string('fail')).result(-1) | 
-            lexeme(string('next')).result(1) | 
-            lexeme(string('retry')).result(2) )
+
+action = ( lexeme(string('ignore')).result(OpCode.IGNORE) | 
+            lexeme(string('fail')).result(OpCode.FAIL) | 
+            lexeme(string('next')).result(OpCode.NEXT) | 
+            lexeme(string('retry')).result(OpCode.RETRY) )
 
 hostname = lexeme(string)
 
@@ -135,7 +139,7 @@ def from_file_clause():
     """
     yield lexeme('from')
     fname = yield string
-    raise EndOfGenerator(("FROM", fname))
+    raise EndOfGenerator((OpCode.FROM, fname))
 
 
 @generate
@@ -145,7 +149,7 @@ def on_error_clause():
     """
     yield lexeme(string('on_error'))
     error_action = yield action
-    raise EndOfGenerator(('ONERROR', error_action))
+    raise EndOfGenerator((OpCode.ONERROR, error_action))
 
     
 @generate
@@ -157,8 +161,11 @@ def exec_command():
     location = yield context
     yield lexeme('do')
     ops = yield from_clause ^ op_sequence ^ op 
-    error_action = optional(on_error_clause, ('ONERROR', 'fail'))
-    raise EndOfGenerator(('EXEC', location, ops, error_action))
+    error_action = optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
+    raise EndOfGenerator((OpCode.EXEC, 
+        location, 
+        ops, 
+        error_action))
 
 
 @generate
@@ -174,10 +181,8 @@ def send_command():
     raise EndOfGenerator(('SEND', filename, destination, error_action))
 
 
-stop_command = lexeme(string('stop')).result('STOP')
-log_commmand = lexeme(string('log')).result('LOG')
-    
-
+stop_command = lexeme(string('stop')).result(OpCode.STOP)
+log_commmand = lexeme(string('log')).result(OpCode.LOG) + string
 
 
 @trap
