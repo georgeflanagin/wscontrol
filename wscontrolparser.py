@@ -90,15 +90,16 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
             lexeme(string('next')).result(OpCode.NEXT) | 
             lexeme(string('retry')).result(OpCode.RETRY) )
 
-hostname = string
+hostname = WHITESPACE >> regex('[A-Za-z]+')
 
+@lexeme
 @generate
 def hostnames():
     """
     Example: (adam, anna)
     """
     yield lparen
-    elements = yield sepBy(hostname, comma)
+    elements = yield sepBy(hostname, COMMA)
     yield rparen
     raise EndOfGenerator(elements)
 
@@ -107,6 +108,7 @@ context = hostnames ^ hostname
 op = quoted
 capture = lexeme(string('capture'))
 
+@lexeme
 @generate
 def capture_op():
     """
@@ -118,6 +120,7 @@ def capture_op():
 
 any_op = capture_op | op
 
+@lexeme
 @generate 
 def op_sequence():
     """
@@ -125,11 +128,12 @@ def op_sequence():
         "sed -i 's/141.166.88.99/newhost/' somefile")
     """
     yield lparen
-    ops = yield sepBy(any_op, comma)
+    ops = yield sepBy(any_op, COMMA)
     yield rparen
     raise EndOfGenerator(ops)
 
 
+@lexeme
 @generate
 def from_file_clause():
     """
@@ -140,6 +144,7 @@ def from_file_clause():
     raise EndOfGenerator((OpCode.FROM, fname))
 
 
+@lexeme
 @generate
 def on_error_clause():
     """
@@ -150,6 +155,7 @@ def on_error_clause():
     raise EndOfGenerator((OpCode.ONERROR, error_action))
 
     
+@lexeme
 @generate
 def exec_command():
     """
@@ -168,6 +174,7 @@ def exec_command():
         error_action))
 
 
+@lexeme
 @generate
 def send_command():
     """
@@ -184,7 +191,7 @@ def send_command():
 stop_command = lexeme(string('stop')).result(OpCode.STOP)
 log_command = lexeme(string('log')).result(OpCode.LOG) + string
 
-wslanguage = stop_command ^ log_command ^ send_command ^ exec_command
+wslanguage = WHITESPACE >> stop_command ^ log_command ^ send_command ^ exec_command
 
 @trap
 def wscontrolparser(s:str) -> Union[int, tuple]:
@@ -205,16 +212,14 @@ def parser_test(p:Parser, s:str) -> int:
     For testing. Pick a parser and a string and print the result or
     the error.
     """
-    try:
-        result = p.parse(s)
-        print(f"{result=}")
-        return os.EX_OK
+    result = p.parse(s)
+    print(f"{result=}\n")
+    return os.EX_OK
 
-    except Exception as e:
-        print(f"{e=}")
-        return os.EX_DATAERR
-    
 
 if __name__ == '__main__':
 
-    print(parser_test(hostnames,"('adam', 'anna')"))
+    print(parser_test(hostname, "adam" ))
+    print(parser_test(hostname, " adam" ))
+    print(parser_test(hostname, "adam " ))
+    print(parser_test(hostnames, "(adam, anna)"))
