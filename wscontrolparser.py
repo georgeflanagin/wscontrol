@@ -159,8 +159,10 @@ def exec_command():
     """
     yield lexeme('on')
     location = yield context
+    location = (OpCode.ON, location)
     yield lexeme('do')
     ops = yield from_clause ^ op_sequence ^ op 
+    ops = (OpCode.DO, ops)
     error_action = optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
     raise EndOfGenerator((OpCode.EXEC, 
         location, 
@@ -185,6 +187,19 @@ stop_command = lexeme(string('stop')).result(OpCode.STOP)
 log_commmand = lexeme(string('log')).result(OpCode.LOG) + string
 
 wslanguage = stop_command ^ log_command ^ send_command ^ exec_command
+
+@trap
+def wscontrolparser(s:str) -> Union[int, tuple]:
+    """
+    Invoke the parser and then assemble the tokens in an
+    orderly way.
+    """
+    try:
+        result = wslanguage.parse(s)
+    except Exception as e:
+        return os.EX_DATAERR
+
+    return tokens
 
 @trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> SloppyTree:
