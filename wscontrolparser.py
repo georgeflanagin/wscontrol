@@ -2,7 +2,7 @@
 import typing
 from   typing import *
 
-min_py = (3, 11)
+min_py = (3, 8)
 
 ###
 # Standard imports, starting with os and sys
@@ -85,14 +85,12 @@ rparen = lexeme(string(RPAREN))
 at_sign = lexeme(string(AT_SIGN))
 comma = lexeme(string(COMMA))
 
-login = string + at_sign + string
-
 action = ( lexeme(string('ignore')).result(OpCode.IGNORE) | 
             lexeme(string('fail')).result(OpCode.FAIL) | 
             lexeme(string('next')).result(OpCode.NEXT) | 
             lexeme(string('retry')).result(OpCode.RETRY) )
 
-hostname = lexeme(string)
+hostname = string
 
 @generate
 def hostnames():
@@ -184,7 +182,7 @@ def send_command():
 
 
 stop_command = lexeme(string('stop')).result(OpCode.STOP)
-log_commmand = lexeme(string('log')).result(OpCode.LOG) + string
+log_command = lexeme(string('log')).result(OpCode.LOG) + string
 
 wslanguage = stop_command ^ log_command ^ send_command ^ exec_command
 
@@ -202,31 +200,21 @@ def wscontrolparser(s:str) -> Union[int, tuple]:
     return tokens
 
 @trap
-def wscontrolparser_main(myargs:argparse.Namespace) -> SloppyTree:
-    return os.EX_OK
-
-
-if __name__ == '__main__':
-    
-    parser = argparse.ArgumentParser(prog="wscontrolparser", 
-        description="What wscontrolparser does, blather does best.")
-
-    parser.add_argument('-i', '--input', type=str, default="",
-        help="Input file name.")
-    parser.add_argument('-o', '--output', type=str, default="",
-        help="Output file name")
-    parser.add_argument('-v', '--verbose', action='store_true',
-        help="Be chatty about what is taking place")
-
-
-    myargs = parser.parse_args()
-    verbose = myargs.verbose
-
+def parser_test(p:Parser, s:str) -> int:
+    """
+    For testing. Pick a parser and a string and print the result or
+    the error.
+    """
     try:
-        outfile = sys.stdout if not myargs.output else open(myargs.output, 'w')
-        with contextlib.redirect_stdout(outfile):
-            sys.exit(globals()[f"{os.path.basename(__file__)[:-3]}_main"](myargs))
+        result = p.parse(s)
+        print(f"{result=}")
+        return os.EX_OK
 
     except Exception as e:
-        print(f"Escaped or re-raised exception: {e}")
+        print(f"{e=}")
+        return os.EX_DATAERR
+    
 
+if __name__ == '__main__':
+
+    print(parser_test(hostnames,"('adam', 'anna')"))
