@@ -91,6 +91,7 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
             lexeme(string('retry')).result(OpCode.RETRY) )
 
 hostname = lexeme(regex('[A-Za-z]+'))
+filename = lexeme(regex('[A-Za-z/\.-_]+'))
 
 @lexeme
 @generate
@@ -161,10 +162,10 @@ def exec_command():
     """
     Example: on parish_lab_computers do "dnf -y update"
     """
-    yield lexeme('on')
+    yield lexeme(string('on'))
     location = yield context
     location = (OpCode.ON, location)
-    yield lexeme('do')
+    yield lexeme(string('do'))
     ops = yield from_clause ^ op_sequence ^ op 
     ops = (OpCode.DO, ops)
     error_action = optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
@@ -180,12 +181,12 @@ def send_command():
     """
     Example: send /some/files/*.txt to all_workstations
     """
-    yield lexeme('send')
-    filename = yield string
-    yield lexeme('to')
+    yield lexeme(string('send'))
+    fname = yield filename
+    yield lexeme(string('to'))
     destination = yield context
-    error_action = optional(on_error_clause, ('ONERROR', 'fail'))
-    raise EndOfGenerator((OpCode.SEND, filename, destination, error_action))
+    action = yield optional(on_error_clause, ('ONERROR', 'fail'))
+    raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
 
 stop_command = lexeme(string('stop')).result(OpCode.STOP)
@@ -220,6 +221,9 @@ def parser_test(p:Parser, s:str) -> int:
 if __name__ == '__main__':
 
     print(parser_test(hostname, "adam" ))
-    # print(parser_test(hostname, " adam" ))
     print(parser_test(hostname, "adam " ))
     print(parser_test(hostnames, "(adam, anna)"))
+    print(parser_test(context, "(adam, anna, michael)"))
+    print(parser_test(context, "michael"))
+    print(parser_test(context, "(michael)"))
+    print(parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)"))
