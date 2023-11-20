@@ -90,7 +90,7 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
             lexeme(string('next')).result(OpCode.NEXT) | 
             lexeme(string('retry')).result(OpCode.RETRY) )
 
-hostname = WHITESPACE >> regex('[A-Za-z]+')
+hostname = lexeme(regex('[A-Za-z]+'))
 
 @lexeme
 @generate
@@ -99,7 +99,7 @@ def hostnames():
     Example: (adam, anna)
     """
     yield lparen
-    elements = yield sepBy(hostname, COMMA)
+    elements = yield sepBy(hostname, comma)
     yield rparen
     raise EndOfGenerator(elements)
 
@@ -128,7 +128,7 @@ def op_sequence():
         "sed -i 's/141.166.88.99/newhost/' somefile")
     """
     yield lparen
-    ops = yield sepBy(any_op, COMMA)
+    ops = yield sepBy(any_op, comma)
     yield rparen
     raise EndOfGenerator(ops)
 
@@ -220,6 +220,6 @@ def parser_test(p:Parser, s:str) -> int:
 if __name__ == '__main__':
 
     print(parser_test(hostname, "adam" ))
-    print(parser_test(hostname, " adam" ))
+    # print(parser_test(hostname, " adam" ))
     print(parser_test(hostname, "adam " ))
     print(parser_test(hostnames, "(adam, anna)"))
