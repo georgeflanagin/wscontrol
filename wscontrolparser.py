@@ -74,23 +74,28 @@ class OpCode(IntEnum):
     SEND = 20
     ONERROR = 21
     EXEC = 22
+    TO = 23
 
     NOP = 126
     STOP = 125
     LOG = 124
 
 
-lparen = lexeme(string(LPAREN))
-rparen = lexeme(string(RPAREN))
+lparen  = lexeme(string(LPAREN))
+rparen  = lexeme(string(RPAREN))
 at_sign = lexeme(string(AT_SIGN))
-comma = lexeme(string(COMMA))
+comma   = lexeme(string(COMMA))
+send    = lexeme(string('send'))
+on      = lexeme(string('on'))
+to      = lexeme(string('to'))
+do      = lexeme(string('do'))
 
 action = ( lexeme(string('ignore')).result(OpCode.IGNORE) | 
             lexeme(string('fail')).result(OpCode.FAIL) | 
             lexeme(string('next')).result(OpCode.NEXT) | 
             lexeme(string('retry')).result(OpCode.RETRY) )
 
-hostname = lexeme(regex('[A-Za-z]+'))
+hostname = lexeme(regex('[A-Za-z_]+'))
 filename = lexeme(regex('[A-Za-z/\.-_]+'))
 
 @lexeme
@@ -117,7 +122,7 @@ def capture_op():
     """
     yield capture
     cmd = yield op
-    raise EndOfGenerator(("CAPTURE", cmd))
+    raise EndOfGenerator((OpCodes.CAPTURE, cmd))
 
 any_op = capture_op | op
 
@@ -140,8 +145,8 @@ def from_file_clause():
     """
     Example: from somelocalfile.txt
     """
-    yield lexeme('from')
-    fname = yield string
+    yield lexeme(string('from'))
+    fname = yield filename
     raise EndOfGenerator((OpCode.FROM, fname))
 
 
@@ -155,6 +160,14 @@ def on_error_clause():
     error_action = yield action
     raise EndOfGenerator((OpCode.ONERROR, error_action))
 
+
+@lexeme
+@generate
+def do_clause():
+    yield do
+    action = yield from_file_clause ^ op_sequence ^ op
+    raise EndOfGenerator((OpCode.DO, action))
+
     
 @lexeme
 @generate
@@ -162,17 +175,13 @@ def exec_command():
     """
     Example: on parish_lab_computers do "dnf -y update"
     """
-    yield lexeme(string('on'))
+    yield on
     location = yield context
-    location = (OpCode.ON, location)
-    yield lexeme(string('do'))
-    ops = yield from_clause ^ op_sequence ^ op 
-    ops = (OpCode.DO, ops)
-    error_action = optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
-    raise EndOfGenerator((OpCode.EXEC, 
-        location, 
-        ops, 
-        error_action))
+    location = ((OpCode.ON, location))
+    action = yield do_clause
+    action = (OpCode.DO, action)
+    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
+    raise EndOfGenerator((OpCode.EXEC, location, action, error_action))
 
 
 @lexeme
@@ -185,6 +194,7 @@ def send_command():
     fname = yield filename
     yield lexeme(string('to'))
     destination = yield context
+    destination = (OpCode.TO, fname)
     action = yield optional(on_error_clause, ('ONERROR', 'fail'))
     raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
@@ -201,7 +211,7 @@ def wscontrolparser(s:str) -> Union[int, tuple]:
     orderly way.
     """
     try:
-        result = wslanguage.parse(s)
+        result = wslanguage.parse(s.strip())
     except Exception as e:
         return os.EX_DATAERR
 
@@ -213,6 +223,7 @@ def parser_test(p:Parser, s:str) -> int:
     For testing. Pick a parser and a string and print the result or
     the error.
     """
+    print(f"Parsing >>{s}<<")
     result = p.parse(s)
     print(f"{result=}\n")
     return os.EX_OK
@@ -220,10 +231,15 @@ def parser_test(p:Parser, s:str) -> int:
 
 if __name__ == '__main__':
 
-    print(parser_test(hostname, "adam" ))
-    print(parser_test(hostname, "adam " ))
-    print(parser_test(hostnames, "(adam, anna)"))
-    print(parser_test(context, "(adam, anna, michael)"))
-    print(parser_test(context, "michael"))
-    print(parser_test(context, "(michael)"))
-    print(parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)"))
+    parser_test(hostname, "adam" )
+    parser_test(hostname, "adam " )
+    parser_test(hostnames, "(adam, anna)")
+    parser_test(context, "(adam, anna, michael)")
+    parser_test(context, "michael")
+    parser_test(context, "(michael)")
+    parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)")
+    parser_test(exec_command, 'on parish_lab_workstations do "date -%s"')
+    parser_test(exec_command, 'on (billieholiday, badenpowell) do "date -%s"')
+
+    parser_test(wslanguage, 'on (sarah, evan, kevin) do "cat /etc/fstab")')   
+    
