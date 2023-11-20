@@ -16,11 +16,7 @@ if sys.version_info < min_py:
 ###
 # Other standard distro imports
 ###
-import argparse
-import contextlib
 from   enum import IntEnum
-import getpass
-mynetid = getpass.getuser()
 
 ###
 # Installed libraries.
