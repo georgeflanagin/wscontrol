@@ -58,11 +58,13 @@ __license__ = 'MIT'
 class OpCode(IntEnum):
     OK = 0
 
+    # Actions to take if there are problems.
     IGNORE = 8
     FAIL = 9
     NEXT = 10
     RETRY = 11
 
+    # Instructions to "do something"
     CAPTURE = 16
     FROM = 17
     DO = 18
@@ -74,6 +76,9 @@ class OpCode(IntEnum):
     LOCAL = 24
     REMOTE = 25
 
+    # Atomic instructions that can appear anywhere. The
+    # NOP instruction can replace any of the others, effectively
+    # commenting out a portion of the code.
     NOP = 126
     STOP = 125
     LOG = 124
@@ -219,9 +224,11 @@ def send_command():
 
 
 stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP)
-log_command = lexeme(string('log')).result(OpCode.LOG) + string
+log_command  = WHITESPACE >> lexeme(string('log')).result(OpCode.LOG) + quoted
+nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
+    (stop_command ^ log_command ^ send_command ^ exec_command)
 
-wslanguage = WHITESPACE >> stop_command ^ log_command ^ send_command ^ exec_command
+wslanguage = WHITESPACE >> nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
 
 @trap
 def parser_test(p:Parser, s:str) -> int:
@@ -262,4 +269,5 @@ if __name__ == '__main__':
     parser_test(wslanguage, """on adam do from local ~/X.sh""")
     parser_test(wslanguage, """send ~/important.txt to all_workstations""")
 
+    parser_test(wslanguage, """log "hello world" """)
     
