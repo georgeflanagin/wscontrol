@@ -71,8 +71,8 @@ class OpCode(IntEnum):
     ONERROR = 21
     EXEC = 22
     TO = 23
-    LOCAL=24
-    REMOTE=25
+    LOCAL = 24
+    REMOTE = 25
 
     NOP = 126
     STOP = 125
