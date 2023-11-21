@@ -71,28 +71,40 @@ class OpCode(IntEnum):
     ONERROR = 21
     EXEC = 22
     TO = 23
+    LOCAL=24
+    REMOTE=25
 
     NOP = 126
     STOP = 125
     LOG = 124
 
-
-lparen  = lexeme(string(LPAREN))
-rparen  = lexeme(string(RPAREN))
+###
+# Parsers for keywords and delimiters.
+###
 at_sign = lexeme(string(AT_SIGN))
 comma   = lexeme(string(COMMA))
-send    = lexeme(string('send'))
-on      = lexeme(string('on'))
-to      = lexeme(string('to'))
 do      = lexeme(string('do'))
+local   = lexeme(string('local'))
+lparen  = lexeme(string(LPAREN))
+on      = lexeme(string('on'))
+rparen  = lexeme(string(RPAREN))
+send    = lexeme(string('send'))
+to      = lexeme(string('to'))
 
+###
+# A parser to turn an action word into an opcode.
+###
 action = ( lexeme(string('ignore')).result(OpCode.IGNORE) | 
             lexeme(string('fail')).result(OpCode.FAIL) | 
             lexeme(string('next')).result(OpCode.NEXT) | 
             lexeme(string('retry')).result(OpCode.RETRY) )
 
+###
+# Host names are alpha+underscore
+# Filenames also allows dashes, and bash symbols.
+###
 hostname = lexeme(regex('[A-Za-z_]+'))
-filename = lexeme(regex('[A-Za-z/\.-_]+'))
+filename = lexeme(regex('[A-Za-z/\.-_$~]+'))
 
 @lexeme
 @generate
@@ -142,12 +154,16 @@ def op_sequence():
 @generate
 def from_file_clause():
     """
-    Example: from somelocalfile.txt
+    Example: from someremotefile.txt
+             from local somefile.txt
     """
     yield WHITESPACE
     yield lexeme(string('from'))
+    local_scope = yield optional(local)
     fname = yield filename
-    raise EndOfGenerator((OpCode.FROM, fname))
+    raise EndOfGenerator((OpCode.FROM, 
+        OpCode.LOCAL if local_scope else OpCode.REMOTE,
+        fname))
 
 
 @lexeme
@@ -182,7 +198,6 @@ def exec_command():
     location = yield context
     location = ((OpCode.ON, location))
     action = yield do_clause
-    action = (OpCode.DO, action)
     error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
     raise EndOfGenerator((OpCode.EXEC, location, action, error_action))
 
@@ -203,7 +218,7 @@ def send_command():
     raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
 
-stop_command = lexeme(string('stop')).result(OpCode.STOP)
+stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP)
 log_command = lexeme(string('log')).result(OpCode.LOG) + string
 
 wslanguage = WHITESPACE >> stop_command ^ log_command ^ send_command ^ exec_command
@@ -222,6 +237,9 @@ def parser_test(p:Parser, s:str) -> int:
 
 if __name__ == '__main__':
 
+    parser_test(wslanguage, 'stop')
+    parser_test(wslanguage, '  stop   ')
+    parser_test(wslanguage, '  stop')
     parser_test(hostname, "adam" )
     parser_test(hostname, "adam " )
     parser_test(hostnames, "(adam, anna)")
@@ -241,5 +259,7 @@ if __name__ == '__main__':
             """)
 
     parser_test(wslanguage, """on adam do from x.sh""")
+    parser_test(wslanguage, """on adam do from local ~/X.sh""")
+    parser_test(wslanguage, """send ~/important.txt to all_workstations""")
 
     
