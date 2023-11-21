@@ -209,19 +209,6 @@ log_command = lexeme(string('log')).result(OpCode.LOG) + string
 wslanguage = WHITESPACE >> stop_command ^ log_command ^ send_command ^ exec_command
 
 @trap
-def wscontrolparser(s:str) -> Union[int, tuple]:
-    """
-    Invoke the parser and then assemble the tokens in an
-    orderly way.
-    """
-    try:
-        result = wslanguage.parse(s.strip())
-    except Exception as e:
-        return os.EX_DATAERR
-
-    return tokens
-
-@trap
 def parser_test(p:Parser, s:str) -> int:
     """
     For testing. Pick a parser and a string and print the result or
@@ -248,8 +235,11 @@ if __name__ == '__main__':
     parser_test(wslanguage, 'on (sarah, evan, kevin) do "cat /etc/fstab")')   
     parser_test(wslanguage, 'on (sarah, evan, kevin) do capture "cat /etc/fstab")')   
     parser_test(wslanguage, """
-        on billieholiday do (
+        on (billieholiday, adam, thais) do (
             capture "tail -1 /etc/fstab", 
             "sed -i 's/141.166.88.99/newhost/' somefile" )
             """)
+
+    parser_test(wslanguage, """on adam do from x.sh""")
+
     
