@@ -100,6 +100,7 @@ def hostnames():
     """
     Example: (adam, anna)
     """
+    yield WHITESPACE
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
@@ -116,11 +117,12 @@ def capture_op():
     """
     Example: capture "an_action"
     """
+    yield WHITESPACE
     yield capture
     cmd = yield op
     raise EndOfGenerator((OpCode.CAPTURE, cmd))
 
-any_op = capture_op | op
+any_op = capture_op ^ op
 
 @lexeme
 @generate 
@@ -129,6 +131,7 @@ def op_sequence():
     Example: (capture "tail -1 /etc/fstab", 
         "sed -i 's/141.166.88.99/newhost/' somefile")
     """
+    yield WHITESPACE
     yield lparen
     ops = yield sepBy(any_op, comma)
     yield rparen
@@ -141,6 +144,7 @@ def from_file_clause():
     """
     Example: from somelocalfile.txt
     """
+    yield WHITESPACE
     yield lexeme(string('from'))
     fname = yield filename
     raise EndOfGenerator((OpCode.FROM, fname))
@@ -152,6 +156,7 @@ def on_error_clause():
     """
     Example: on_error fail
     """
+    yield WHITESPACE
     yield lexeme(string('on_error'))
     error_action = yield action
     raise EndOfGenerator((OpCode.ONERROR, error_action))
@@ -160,6 +165,7 @@ def on_error_clause():
 @lexeme
 @generate
 def do_clause():
+    yield WHITESPACE
     yield do
     action = yield from_file_clause ^ capture_op ^ op_sequence ^ op
     raise EndOfGenerator((OpCode.DO, action))
@@ -171,6 +177,7 @@ def exec_command():
     """
     Example: on parish_lab_computers do "dnf -y update"
     """
+    yield WHITESPACE
     yield on
     location = yield context
     location = ((OpCode.ON, location))
@@ -186,6 +193,7 @@ def send_command():
     """
     Example: send /some/files/*.txt to all_workstations
     """
+    yield WHITESPACE
     yield lexeme(string('send'))
     fname = yield filename
     yield lexeme(string('to'))
@@ -239,4 +247,9 @@ if __name__ == '__main__':
 
     parser_test(wslanguage, 'on (sarah, evan, kevin) do "cat /etc/fstab")')   
     parser_test(wslanguage, 'on (sarah, evan, kevin) do capture "cat /etc/fstab")')   
+    parser_test(wslanguage, """
+        on billieholiday do (
+            capture "tail -1 /etc/fstab", 
+            "sed -i 's/141.166.88.99/newhost/' somefile" )
+            """)
     
