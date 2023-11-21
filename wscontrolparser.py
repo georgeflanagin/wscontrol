@@ -118,7 +118,7 @@ def capture_op():
     """
     yield capture
     cmd = yield op
-    raise EndOfGenerator((OpCodes.CAPTURE, cmd))
+    raise EndOfGenerator((OpCode.CAPTURE, cmd))
 
 any_op = capture_op | op
 
@@ -161,7 +161,7 @@ def on_error_clause():
 @generate
 def do_clause():
     yield do
-    action = yield from_file_clause ^ op_sequence ^ op
+    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op
     raise EndOfGenerator((OpCode.DO, action))
 
     
@@ -238,4 +238,5 @@ if __name__ == '__main__':
     parser_test(exec_command, 'on (billieholiday, badenpowell) do "date -%s"')
 
     parser_test(wslanguage, 'on (sarah, evan, kevin) do "cat /etc/fstab")')   
+    parser_test(wslanguage, 'on (sarah, evan, kevin) do capture "cat /etc/fstab")')   
     
