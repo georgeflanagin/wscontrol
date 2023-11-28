@@ -76,7 +76,7 @@ class WSConsole(cmd.Cmd):
     @trap
     def default(self, args:str='') -> None:
         if args.lower() != "stop":
-            print(args)
+            print(wslanguage.parse(args.lower()))
         else:
             sys.exit(os.EX_OK)
         
