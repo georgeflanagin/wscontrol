@@ -223,7 +223,7 @@ def send_command():
     raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
 
-stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP)
+stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme(string('quit')).result(OpCode.STOP)
 log_command  = WHITESPACE >> lexeme(string('log')).result(OpCode.LOG) + quoted
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
     (stop_command ^ log_command ^ send_command ^ exec_command)

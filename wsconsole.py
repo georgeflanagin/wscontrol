@@ -39,7 +39,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that are a part of this project
 ###
-
+from wscontrolparser import wslanguage
 
 ###
 # Global objects and initializations
