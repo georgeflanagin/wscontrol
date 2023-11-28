@@ -64,17 +64,20 @@ class OpCode(IntEnum):
     NEXT = 10
     RETRY = 11
 
-    # Instructions to "do something"
-    CAPTURE = 16
-    FROM = 17
-    DO = 18
-    ON = 19
-    SEND = 20
-    ONERROR = 21
-    EXEC = 22
-    TO = 23
-    LOCAL = 24
-    REMOTE = 25
+    # Instructions to "do something" or "identify something"
+    CAPTURE     = 16
+    FROM        = 17
+    DO          = 18
+    ON          = 19
+    SEND        = 20
+    ONERROR     = 21
+    EXEC        = 22
+    TO          = 23
+    LOCAL       = 24
+    REMOTE      = 25
+    FILES       = 26
+    LITERAL     = 27
+    
 
     # Atomic instructions that can appear anywhere. The
     # NOP instruction can replace any of the others, effectively
@@ -216,19 +219,50 @@ def send_command():
     yield WHITESPACE
     yield lexeme(string('send'))
     fname = yield filename
+    fname = (OpCode.FILES, fname)
     yield lexeme(string('to'))
     destination = yield context
-    destination = (OpCode.TO, fname)
+    destination = (OpCode.TO, destination)
     action = yield optional(on_error_clause, ('ONERROR', 'fail'))
     raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
 
+@lexeme
+@generate
+def log_command():
+    """
+    Log a message.
+    """
+    yield WHITESPACE
+    yield lexeme(string('log'))
+    text = yield quoted ^ everything
+    raise EndOfGenerator((OpCode.LOG, (OpCode.LITERAL, text)))
+
 stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme(string('quit')).result(OpCode.STOP)
-log_command  = WHITESPACE >> lexeme(string('log')).result(OpCode.LOG) + quoted
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
     (stop_command ^ log_command ^ send_command ^ exec_command)
 
 wslanguage = WHITESPACE >> nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
+
+@trap
+def make_tree(opcodes:tuple) -> SloppyTree:
+    """
+    Run down the opcodes, and build a tree so that we can use the 
+    usual tree functions to find things. 
+    """
+    t = SloppyTree()
+    try:
+        command, instructions = opcodes
+    except:
+        return t[opcodes]
+
+    for opcode in instructions:
+        if isinstance(opcode, tuple):
+            t[command][opcode[0]] = opcode[1:]
+        else:
+            t[command][opcode]
+    return t
+
 
 @trap
 def parser_test(p:Parser, s:str) -> int:
