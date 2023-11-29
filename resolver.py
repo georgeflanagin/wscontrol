@@ -2,7 +2,7 @@
 import typing
 from   typing import *
 
-min_py = (3, 11)
+min_py = (3, 9)
 
 ###
 # Standard imports, starting with os and sys
@@ -17,11 +17,10 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 import argparse
-import cmd
 import contextlib
 import getpass
 mynetid = getpass.getuser()
-from   pprint import pprint
+
 ###
 # Installed libraries.
 ###
@@ -30,17 +29,16 @@ from   pprint import pprint
 ###
 # From hpclib
 ###
+import fileutils
 import linuxutils
+import netutils
 from   sloppytree import SloppyTree
-from   sqlitedb import SQLiteDB
 from   urdecorators import trap
-from   urlogger import URLogger
 
 ###
 # imports and objects that are a part of this project
 ###
-from resolver import resolver
-from wscontrolparser import wslanguage, make_tree
+from   wscontrolparser import OpCode
 
 ###
 # Global objects and initializations
@@ -59,26 +57,33 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-
-class WSConsole(cmd.Cmd):
-    
-    def __init__(self, 
-        config:SloppyTree, 
-        db:SQLiteDB, 
-        logger:URLogger):
-
-        cmd.Cmd.__init__(self)
-        self.config = config
-        self.db = db
-        self.logger = logger
-        self.prompt = "[WSControl]: "
+info = netutils.get_ssh_host_info('all')
 
 
-    @trap
-    def default(self, args:str='') -> None:
-        pprint(resolver(make_tree(wslanguage.parse(args.lower()))))
-            
-        if args.lower() == "stop":
-            sys.exit(os.EX_OK)
-        
+@trap
+def resolver(t:SloppyTree) -> SloppyTree:
+    """
+    This function works its way through the tree of symbols looking for
+    ones that are un-resolved. Examples are: 
+
+        - filenames that might contain environment variables like $HOME, 
+            or that have relative paths like ../somedir/somefile.txt  
+        - hostnames that are defined in ~/.ssh/config
+
+    """
+    cmd = next(iter(dict(t)))
+    d = t[cmd]
+
+    for k in d.keys():
+        # Resolve file names.
+        if k is OpCode.FILES:
+            d[k] = tuple(fileutils.expandall(_) for _ in d[k])
+
+        # Resolve connection information.
+        elif k in (OpCode.ON, OpCode.TO):
+            d[k] = tuple(info[_] for _ in d[k] if _)
+       
+    t[cmd] = d
+    return t
+
 
