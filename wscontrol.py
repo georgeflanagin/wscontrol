@@ -96,7 +96,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     
     console=WSConsole(config, db, logger)
     try:
-        console.cmdloop(intro="Welcome to WSControl")
+        console.cmdloop(intro=f"Welcome to WSControl. Version {linuxutils.version(False)}")
     except KeyboardInterrupt as e:
         print("You pressed control-C")
         logger.info("Leaving via control-C")

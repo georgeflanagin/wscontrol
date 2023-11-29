@@ -21,7 +21,7 @@ import cmd
 import contextlib
 import getpass
 mynetid = getpass.getuser()
-
+from   pprint import pprint
 ###
 # Installed libraries.
 ###
@@ -39,7 +39,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that are a part of this project
 ###
-from wscontrolparser import wslanguage
+from wscontrolparser import wslanguage, make_tree
 
 ###
 # Global objects and initializations
@@ -75,9 +75,9 @@ class WSConsole(cmd.Cmd):
 
     @trap
     def default(self, args:str='') -> None:
-        if args.lower() != "stop":
-            print(wslanguage.parse(args.lower()))
-        else:
+        pprint(make_tree(wslanguage.parse(args.lower())))
+            
+        if args.lower() == "stop":
             sys.exit(os.EX_OK)
         
 

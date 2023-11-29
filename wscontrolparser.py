@@ -99,6 +99,8 @@ rparen  = lexeme(string(RPAREN))
 send    = lexeme(string('send'))
 to      = lexeme(string('to'))
 
+seq_pt  = lexeme(string(SEMICOLON))
+
 ###
 # A parser to turn an action word into an opcode.
 ###
@@ -124,7 +126,7 @@ def hostnames():
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
-    raise EndOfGenerator(elements)
+    raise EndOfGenerator(tuple(elements))
 
 context = hostnames ^ hostname
 
@@ -155,7 +157,7 @@ def op_sequence():
     yield lparen
     ops = yield sepBy(any_op, comma)
     yield rparen
-    raise EndOfGenerator(ops)
+    raise EndOfGenerator(tuple(ops))
 
 
 @lexeme
@@ -223,7 +225,7 @@ def send_command():
     yield lexeme(string('to'))
     destination = yield context
     destination = (OpCode.TO, destination)
-    action = yield optional(on_error_clause, ('ONERROR', 'fail'))
+    action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
     raise EndOfGenerator((OpCode.SEND, fname, destination, action))
 
 
@@ -238,9 +240,18 @@ def log_command():
     text = yield quoted ^ everything
     raise EndOfGenerator((OpCode.LOG, (OpCode.LITERAL, text)))
 
+###
+# the STOP command is just "stop" or "quit"
+###
 stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme(string('quit')).result(OpCode.STOP)
+
+###
+# the NOP might be followed by anything else, or not. Effectively,
+# it works as a comment in the object code for whatever might 
+# come afterwards.
+###
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
-    (stop_command ^ log_command ^ send_command ^ exec_command)
+    optional(stop_command ^ log_command ^ send_command ^ exec_command)
 
 wslanguage = WHITESPACE >> nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
 
@@ -248,19 +259,38 @@ wslanguage = WHITESPACE >> nop_command ^ stop_command ^ log_command ^ send_comma
 def make_tree(opcodes:tuple) -> SloppyTree:
     """
     Run down the opcodes, and build a tree so that we can use the 
-    usual tree functions to find things. 
+    usual tree functions to find things. The general format of a
+    successfully parsed input is 
+        - an opcode 
+        - optionally followed by tuples
+        - each interior tuple is an opcode and an operand
+        - the operand may be a single or an iterable.
     """
-    t = SloppyTree()
-    try:
-        command, instructions = opcodes
-    except:
-        return t[opcodes]
+    
+    ###
+    # Make sure the argument is a tuple, even if it is a one-tuple.
+    ###
+    if not isinstance(opcodes, tuple):
+        opcodes = (opcodes,)
 
-    for opcode in instructions:
-        if isinstance(opcode, tuple):
-            t[command][opcode[0]] = opcode[1:]
-        else:
-            t[command][opcode]
+    t = SloppyTree()
+
+    ###
+    # If we get an atomic opcode, create a tree that only has a root,
+    # and we are done.
+    ###
+    command = opcodes[0]
+    t[command]
+    instructions = opcodes[1:]
+    if not len(instructions): return t
+
+    for action in instructions:
+        opcode = action[0]
+        if not isinstance(opcode, OpCode):
+            raise Exception(f"Found {action}. Excepted a tuple or an OpCode")
+        operands = action[1:]
+        t[command][opcode] = operands
+
     return t
 
 
@@ -271,22 +301,27 @@ def parser_test(p:Parser, s:str) -> int:
     the error.
     """
     print(f"Parsing >>{s}<<")
-    result = p.parse(s)
+    result = make_tree(p.parse(s))
     print(f"{result=}\n")
     return os.EX_OK
 
 
 if __name__ == '__main__':
 
-    parser_test(wslanguage, 'stop')
-    parser_test(wslanguage, '  stop   ')
-    parser_test(wslanguage, '  stop')
-    parser_test(hostname, "adam" )
-    parser_test(hostname, "adam " )
-    parser_test(hostnames, "(adam, anna)")
-    parser_test(context, "(adam, anna, michael)")
-    parser_test(context, "michael")
-    parser_test(context, "(michael)")
+    ###
+    # Keep these around just in case.
+    ###
+
+    #parser_test(wslanguage, 'stop')
+    #parser_test(wslanguage, '  stop   ')
+    #parser_test(wslanguage, '  stop')
+    #parser_test(hostname, "adam" )
+    #parser_test(hostname, "adam " )
+    #parser_test(hostnames, "(adam, anna)")
+    #parser_test(context, "(adam, anna, michael)")
+    #parser_test(context, "michael")
+    #parser_test(context, "(michael)")
+
     parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)")
     parser_test(exec_command, 'on parish_lab_workstations do "date -%s"')
     parser_test(exec_command, 'on (billieholiday, badenpowell) do "date -%s"')
@@ -304,4 +339,4 @@ if __name__ == '__main__':
     parser_test(wslanguage, """send ~/important.txt to all_workstations""")
 
     parser_test(wslanguage, """log "hello world" """)
-    
+    parser_test(wslanguage, """stop""")
