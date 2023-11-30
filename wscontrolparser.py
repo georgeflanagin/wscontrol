@@ -253,7 +253,20 @@ stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
     optional(stop_command ^ log_command ^ send_command ^ exec_command)
 
-wslanguage = WHITESPACE >> nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
+any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
+wslanguage = WHITESPACE >> any_command << optional(seq_pt)
+
+@lexeme
+@generate
+def wsscript():
+    """
+    The traditional concept of the compound statement from C
+    """
+    yield WHITESPACE
+    statements = yield many(sepBy(any_command, seq_pt))
+    yield eof
+    raise EndOfGenerator(statements)
+
 
 @trap
 def make_tree(opcodes:tuple) -> SloppyTree:
