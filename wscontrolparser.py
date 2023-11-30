@@ -126,7 +126,7 @@ def hostnames():
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
-    raise EndOfGenerator(tuple(elements))
+    raise EndOfGenerator(elements)
 
 context = hostnames ^ hostname
 
