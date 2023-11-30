@@ -59,6 +59,10 @@ __license__ = 'MIT'
 
 info = netutils.get_ssh_host_info('all')
 
+@trap
+def resolve_ON(data:dict) -> SloppyTree:
+    pass
+    
 
 @trap
 def resolver(t:SloppyTree) -> SloppyTree:
@@ -70,22 +74,24 @@ def resolver(t:SloppyTree) -> SloppyTree:
             or that have relative paths like ../somedir/somefile.txt  
         - hostnames that are defined in ~/.ssh/config
 
+    The resolver() goes through the tree and looks for OpCodes that 
+    have resolvers identified by name: OpCode.ON -> resolve_ON, and so
+    on. If they don't, then no changes are made.
+
     """
     cmd = next(iter(dict(t)))
     d = t[cmd]
 
     for k in d.keys():
         if k in OpCode:
-            d[k] = globals().get
-        
-        # Resolve file names.
-        if k is OpCode.FILES:
-            d[k] = tuple(fileutils.expandall(_) for _ in d[k])
+            try:
+                d[k] = globals()[f"resolve_{k.name}"](d[k])
+            except:
+                pass
 
-        # Resolve connection information.
-        elif k in (OpCode.ON, OpCode.TO):
-            d[k] = tuple(info[_] for _ in d[k] if _)
-       
+        else:
+            pass # someday, we have something else here.
+        
     t[cmd] = d
     return t
 
