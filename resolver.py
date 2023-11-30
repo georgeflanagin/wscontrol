@@ -75,6 +75,9 @@ def resolver(t:SloppyTree) -> SloppyTree:
     d = t[cmd]
 
     for k in d.keys():
+        if k in OpCode:
+            d[k] = globals().get
+        
         # Resolve file names.
         if k is OpCode.FILES:
             d[k] = tuple(fileutils.expandall(_) for _ in d[k])

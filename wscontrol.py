@@ -72,6 +72,9 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     global logger
     logger.info("start")
 
+    ###
+    # Step 1: get the database open.
+    ###
     if not os.path.exists(myargs.db):
         logger.error(f"{myargs.db} does not exist.")
         sys.exit(os.EX_IOERR)
@@ -82,6 +85,9 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
         sys.exit(os.EX_CONFIG)
     logger.info(f"{myargs.db} is open.")
 
+    ###
+    # Step 2: read the configuration.
+    ###
     if not os.path.exists(myargs.config):
         logger.error(f"{myargs.config} not found.")
         sys.exit(os.EX_IOERR)
@@ -94,6 +100,9 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
         logger.error(e)
         sys.exit(os.EX_CONFIG)
     
+    ###
+    # Step 3: create the interactive console, and begin to read
+    # the input.
     console=WSConsole(config, db, logger)
     try:
         console.cmdloop(intro=f"Welcome to WSControl. Version {linuxutils.version(False)}")
