@@ -6,9 +6,7 @@ on (billieholiday, badenpowell) do "date -%s"')
 on (sarah, evan, kevin) do "cat /etc/fstab")')   
 on (sarah, evan, kevin) do capture "cat /etc/fstab")')   
 
-on (billieholiday, adam, thais) do ( \
-    capture "tail -1 /etc/fstab", \
-    "sed -i 's/141.166.88.99/newhost/' somefile" )
+on (billieholiday, adam, thais) do ( capture "tail -1 /etc/fstab", "sed -i 's/141.166.88.99/newhost/' somefile" )
 
 on adam do from x.sh
 on adam do from local ~/X.sh

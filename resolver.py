@@ -77,9 +77,26 @@ def resolve_FILES(data:tuple) -> tuple:
     if isinstance(files, str): files = (files,)
     return tuple(fileutils.expandall(_) for _ in files)
 
+@trap
+def resolve_FROM(data:tuple) -> tuple:
+    """
+    FROM clause is part of a three-tuple. Only if it is a LOCAL
+    file do we try to resolve the file name.
+    """
+    clause = data[0]
+    if clause[1] is OpCode.LOCAL:
+        return clause[0], clause[1], fileutils.expandall(clause[2])
+    else:
+        return clause
+
 
 @trap
-def resolve_ON(data:tuple) -> SloppyTree:
+def resolve_DO(data:tuple) -> tuple:
+    if OpCode.FROM in data[0]:
+        return resolve_FROM(data)
+    
+@trap
+def resolve_ON(data:tuple) -> tuple:
     """
     hostnames come in looking like this:
 
@@ -88,11 +105,17 @@ def resolve_ON(data:tuple) -> SloppyTree:
     global info
     hosts = data[0]
     if isinstance (hosts, str): hosts = (hosts,)
-    return tuple(info.get(_) for _ in hosts)
+    
+    # First, determine if the name is really a host name
+    # or if it is something else. 
+    for host in hosts:
+        if host not in info:
+            pass    
+
+    return tuple(info.get(_, _) for _ in hosts)
     
 
 resolve_TO = resolve_ON
-    
 
 @trap
 def resolver(t:SloppyTree) -> SloppyTree:
