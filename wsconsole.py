@@ -76,10 +76,19 @@ class WSConsole(cmd.Cmd):
 
     @trap
     def default(self, args:str='') -> None:
+        if not os.isatty(0):
+            print(args)
+
         if args.lower() in ("stop", "quit", "exit"):
             sys.exit(os.EX_OK)
 
-        pprint(resolver(make_tree(wslanguage.parse(args))))
+        try:
+            pprint(resolver(make_tree(wslanguage.parse(args))))
+        except KeyboardInterrupt as e:
+            print("You pressed control C. Exiting.")
+            sys.exit(os.EX_OK)
+        except Exception as e:
+            print("There is an error somewhere in your request.") 
             
         
 

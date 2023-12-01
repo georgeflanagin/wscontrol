@@ -87,6 +87,7 @@ def resolve_ON(data:tuple) -> SloppyTree:
     """
     global info
     hosts = data[0]
+    if isinstance (hosts, str): hosts = (hosts,)
     return tuple(info.get(_) for _ in hosts)
     
 
