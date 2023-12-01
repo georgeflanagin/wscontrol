@@ -17,6 +17,7 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 from   enum import IntEnum
+from   pprint import pprint
 
 ###
 # Installed libraries.
@@ -114,7 +115,17 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
 # Filenames also allows dashes, and bash symbols.
 ###
 hostname = lexeme(regex('[A-Za-z_]+'))
-filename = lexeme(regex('[A-Za-z/\.-_$~]+'))
+filename = lexeme(regex('[A-Za-z/\.\-\*_$~]+'))
+
+@lexeme
+@generate
+def filenames():
+    yield WHITESPACE
+    yield lparen
+    fnames = yield sepBy(filename, comma)
+    yield rparen
+    raise EndOfGenerator(fnames)
+
 
 @lexeme
 @generate
@@ -220,7 +231,7 @@ def send_command():
     """
     yield WHITESPACE
     yield lexeme(string('send'))
-    fname = yield filename
+    fname = yield filenames ^ filename
     fname = (OpCode.FILES, fname)
     yield lexeme(string('to'))
     destination = yield context
@@ -314,8 +325,7 @@ def parser_test(p:Parser, s:str) -> int:
     the error.
     """
     print(f"Parsing >>{s}<<")
-    result = make_tree(p.parse(s))
-    print(f"{result=}\n")
+    pprint(make_tree(p.parse(s)))
     return os.EX_OK
 
 
@@ -336,6 +346,7 @@ if __name__ == '__main__':
     #parser_test(context, "(michael)")
 
     parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)")
+    parser_test(send_command, "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)")
     parser_test(exec_command, 'on parish_lab_workstations do "date -%s"')
     parser_test(exec_command, 'on (billieholiday, badenpowell) do "date -%s"')
 

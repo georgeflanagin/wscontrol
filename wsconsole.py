@@ -76,9 +76,10 @@ class WSConsole(cmd.Cmd):
 
     @trap
     def default(self, args:str='') -> None:
-        pprint(resolver(make_tree(wslanguage.parse(args.lower()))))
-            
-        if args.lower() == "stop":
+        if args.lower() in ("stop", "quit", "exit"):
             sys.exit(os.EX_OK)
+
+        pprint(resolver(make_tree(wslanguage.parse(args))))
+            
         
 

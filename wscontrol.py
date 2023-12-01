@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     here       = os.getcwd()
     progname   = os.path.basename(__file__)[:-3]
-    configfile = f"{here}/{progname}.conf"
+    configfile = f"{here}/{progname}.toml"
     database   = f"{here}/{progname}.db"
     logfile    = f"{here}/{progname}.log"
     
@@ -138,8 +138,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--loglevel', type=int,
         choices=range(logging.FATAL, logging.NOTSET, -10), 
-        default=logging.INFO, 
-        help=f"Logging level, defaults to {logging.INFO}")
+        default=logging.DEBUG, 
+        help=f"Logging level, defaults to {logging.DEBUG}")
 
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name (for non-interactive use.)")

@@ -20,6 +20,8 @@ import argparse
 import contextlib
 import getpass
 mynetid = getpass.getuser()
+from   glob import glob
+import logging
 
 ###
 # Installed libraries.
@@ -34,6 +36,7 @@ import linuxutils
 import netutils
 from   sloppytree import SloppyTree
 from   urdecorators import trap
+from   urlogger import URLogger, piddly
 
 ###
 # imports and objects that are a part of this project
@@ -58,10 +61,36 @@ __status__ = 'in progress'
 __license__ = 'MIT'
 
 info = netutils.get_ssh_host_info('all')
+logger = logging.getLogger('URLogger')
 
 @trap
-def resolve_ON(data:dict) -> SloppyTree:
-    pass
+def resolve_FILES(data:tuple) -> tuple:
+    """
+    FILES come in looking like these examples:
+
+    One file: ('/ab/c/d',)
+    Two files: (['/ab/c/d', '$HOME/.bashrc'],)
+
+    Note that each is a one-tuple. 
+    """
+    files = data[0]
+    if isinstance(files, str): files = (files,)
+    return tuple(fileutils.expandall(_) for _ in files)
+
+
+@trap
+def resolve_ON(data:tuple) -> SloppyTree:
+    """
+    hostnames come in looking like this:
+
+    (['adam', 'anna', 'kevin'],)
+    """
+    global info
+    hosts = data[0]
+    return tuple(info.get(_) for _ in hosts)
+    
+
+resolve_TO = resolve_ON
     
 
 @trap
@@ -83,14 +112,19 @@ def resolver(t:SloppyTree) -> SloppyTree:
     d = t[cmd]
 
     for k in d.keys():
+        logger.debug(f"{k=}")
         if k in OpCode:
             try:
+                logger.debug(f"resolve_{k.name}")
+                logger.debug(f"{d[k]=}")
                 d[k] = globals()[f"resolve_{k.name}"](d[k])
             except:
+                logger.info(f"No resolver for resolve_{k.name}")                
                 pass
 
         else:
-            pass # someday, we have something else here.
+            logger.info(f"{k=} not in OpCode")
+            pass # someday, we may have something else here.
         
     t[cmd] = d
     return t
