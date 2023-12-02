@@ -22,10 +22,42 @@ have been issued, for which workstations, when this command was issued
 and by whom. The usefulness should be clear: it helps with auditing, 
 undo-ing mistakes, and redo-ing successes. 
 
+## Basic operation
+
+Begin by sourcing `wscontrol.sh`. This file contains a few shell functions
+that will make operation easier and less subject to errors.
+
+`wscontrol` -- brings up the interactive console. The program will wait
+for your next command until you type one of _exit_, _quit_, or _stop_.
+
+`wscontrol << commandfile` -- will run the program as if you had typed
+in everything in the `commandfile`. The program will echo the contents
+of the `commandfile` to `stdout` while it processes your requests.
+
+There are several command line switches.
+
+`--config` -- Allows you to specify a config file other than `wscontrol.toml`
+in the current directory.
+
+`--db` -- Allows you to specify a database for recording the activity
+if you want to use something other than the file named `wscontrol.db`
+in the current directory.
+
+
+`--loglevel` -- sets the threshold for logging messages. The default
+is the system setting, `logging.INFO`.
+
+`-z` -- will clear the logfile before starting.
+
 
 ## Configuration File
 
 Everything about the environment can be placed in a single TOML file. 
+By default, this is `wscontrol.toml`. `wscontrol` considers this file
+to be the highest authority for information about the workstations, and
+all symbols are first checked to see if they have a definition in this file.
+
+For example, 
 
 ## wscontrol Language
 
