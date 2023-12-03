@@ -2,15 +2,15 @@
 # This is the configuration file for wscontrol
 ###
 
-workstations.donald = [ 'enterprise' ]
+ws.donald = [ 'enterprise' ]
 
-workstations.parish = [ 
+ws.parish = [ 
     'adam', 'alexis', 'anna', 'boyi', 'camryn', 
     'cooper', 'erica', 'evan', 'irene', 'justin',
     'kevin',  'michael', 'sarah', 'thais' 
     ]
 
-workstations.provost = [
+ws.provost = [
     'badenpowell', 'billieholiday', 'lesteryoung'
     ]
 

@@ -89,17 +89,24 @@ def resolve_ON(data:tuple) -> SloppyTree:
     global info, config
     hosts = data[0]
     if isinstance (hosts, str): hosts = (hosts,)
-    for host in hosts:
-        host = config.get(host, host)
-                
-    return tuple(info.get(_) for _ in hosts)
+
+    connection_info = []
+    for datum in data:
+        hosts = config.get(datum, datum)
+        for host in hosts:
+            hostinfo = info.get(host)
+            if hostinfo is None:
+                logger.error(f"No info on {host}.")
+                sys.exit(os.EX_CONFIG)
+            connection_info.append(hostinfo)   
     
+    return connection_info
 
 resolve_TO = resolve_ON
     
 
 @trap
-def resolver(config:SloppyTree, 
+def resolver(toml_config:SloppyTree, 
         t:SloppyTree) -> SloppyTree:
     """
     This function works its way through the tree of symbols looking for
@@ -113,14 +120,14 @@ def resolver(config:SloppyTree,
     have resolvers identified by name: OpCode.ON -> resolve_ON, and so
     on. If they don't, then no changes are made.
 
-    config -- configuration data read from the .toml file.
+    toml_config -- configuration data read from the .toml file.
     t -- The parse tree representing the user's command.
 
     returns -- The modified (resolved) parse tree.
 
     """
     global config
-    config = config
+    config = toml_config
 
     cmd = next(iter(dict(t)))
     d = t[cmd]
