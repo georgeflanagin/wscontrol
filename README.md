@@ -53,11 +53,13 @@ is the system setting, `logging.INFO`.
 ## Configuration File
 
 Everything about the environment can be placed in a single TOML file. 
-By default, this is `wscontrol.toml`. `wscontrol` considers this file
+By default, this is `wscontrol.toml`. `wscontrol` considers the TOML file
 to be the highest authority for information about the workstations, and
 all symbols are first checked to see if they have a definition in this file.
 
-For example, 
+Given that `ssh` is the assumed communication channel between `wscontrol`
+and the workstations in its pale, information from `~/.ssh/config` is 
+also used, although information in `wscontrol.toml` takes precedence.
 
 ## wscontrol Language
 
@@ -66,3 +68,5 @@ makes it easy to do the most common things. Rather than provide the
 entire EBNF grammar --- interested readers can examine the code in
 `wscontrolparser.py` --- a few examples may suffice for most users. 
 
+The language is as small as possible, and the parsing is entirely contained
+in the source code file, `wscontrolparser.py`.
