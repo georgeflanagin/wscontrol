@@ -62,6 +62,7 @@ __license__ = 'MIT'
 
 info = netutils.get_ssh_host_info('all')
 logger = logging.getLogger('URLogger')
+config = None
 
 @trap
 def resolve_FILES(data:tuple) -> tuple:
@@ -85,9 +86,12 @@ def resolve_ON(data:tuple) -> SloppyTree:
 
     (['adam', 'anna', 'kevin'],)
     """
-    global info
+    global info, config
     hosts = data[0]
     if isinstance (hosts, str): hosts = (hosts,)
+    for host in hosts:
+        host = config.get(host, host)
+                
     return tuple(info.get(_) for _ in hosts)
     
 
@@ -95,7 +99,8 @@ resolve_TO = resolve_ON
     
 
 @trap
-def resolver(t:SloppyTree) -> SloppyTree:
+def resolver(config:SloppyTree, 
+        t:SloppyTree) -> SloppyTree:
     """
     This function works its way through the tree of symbols looking for
     ones that are un-resolved. Examples are: 
@@ -108,7 +113,15 @@ def resolver(t:SloppyTree) -> SloppyTree:
     have resolvers identified by name: OpCode.ON -> resolve_ON, and so
     on. If they don't, then no changes are made.
 
+    config -- configuration data read from the .toml file.
+    t -- The parse tree representing the user's command.
+
+    returns -- The modified (resolved) parse tree.
+
     """
+    global config
+    config = config
+
     cmd = next(iter(dict(t)))
     d = t[cmd]
 
