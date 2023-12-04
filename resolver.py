@@ -65,6 +65,21 @@ logger = logging.getLogger('URLogger')
 config = None
 
 @trap
+def resolve_config(search_term:str, not_found:object) -> object:
+    """
+    Look through our config information for a symbol.
+    """
+    global config
+
+    d = config
+    for t in search_term.split('.'):    
+        d = d.get(t)
+        if d is None: return not_found
+        
+    return d
+
+
+@trap
 def resolve_FILES(data:tuple) -> tuple:
     """
     FILES come in looking like these examples:
@@ -101,8 +116,10 @@ def resolve_FROM(data:tuple) -> tuple:
 
 @trap
 def resolve_DO(data:tuple) -> tuple:
-    if OpCode.FROM in data[0]:
+    logger.debug(f"{data[0]=}")
+    if OpCode.FROM.name in data[0]:
         return resolve_FROM(data)
+    return data[0]
 
     
 @trap
@@ -121,7 +138,7 @@ def resolve_ON(data:tuple) -> tuple:
 
     connection_info = []
     for datum in data:
-        hosts = config.get(datum, (datum,))
+        hosts = resolve_config(datum, (datum,))
         logger.debug(f"{datum=} {hosts=}")
         for host in hosts:
             hostinfo = info.get(host)

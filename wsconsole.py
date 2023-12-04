@@ -127,9 +127,10 @@ class WSConsole(cmd.Cmd):
             print("You pressed control C. Exiting.")
             sys.exit(os.EX_OK)
 
-        except ParseError as e:
+        except parsec4.ParseError as e:
             print("There is an error somewhere in your request.") 
             print(self.construct_error_message(e))  
+            return
         
         resolved_command = resolver(self.config, make_tree(tokens))
         pprint(resolved_command)

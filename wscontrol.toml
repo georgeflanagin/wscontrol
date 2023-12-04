@@ -14,8 +14,16 @@ ws.provost = [
     'badenpowell', 'billieholiday', 'lesteryoung'
     ]
 
-workstations.linux7 = [ 'cooper', 'thais', 'anna' ]
-workstations.linux8 = [ 
+ws.all = [
+    'adam', 'alexis', 'anna', 'boyi', 'camryn', 
+    'cooper', 'erica', 'evan', 'irene', 'justin',
+    'kevin',  'michael', 'sarah', 'thais', 
+    'badenpowell', 'billieholiday', 'lesteryoung',
+    'enterprise'
+    ]
+
+ws.linux7 = [ 'cooper', 'thais', 'anna' ]
+ws.linux8 = [ 
     'adam', 'alexis', 'boyi', 'camryn', 'erica',
     'evan', 'irene', 'justin', 'kevin', 'michael',
     'sarah', 'enterprise' ]
