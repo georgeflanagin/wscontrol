@@ -73,10 +73,18 @@ def resolve_FILES(data:tuple) -> tuple:
     Two files: (['/ab/c/d', '$HOME/.bashrc'],)
 
     Note that each is a one-tuple. 
+
+    NOTE: Why not glob the filenames? There are two reasons that this
+    does not work. [1] If nothing matches the globbed expression, glob
+    returns an empty list. [2] Most of the programs like rsync and
+    scp that might be used to move files between hosts deal well with
+    wildcard file names.
+
     """
     files = data[0]
     if isinstance(files, str): files = (files,)
     return tuple(fileutils.expandall(_) for _ in files)
+
 
 @trap
 def resolve_FROM(data:tuple) -> tuple:
@@ -95,6 +103,7 @@ def resolve_FROM(data:tuple) -> tuple:
 def resolve_DO(data:tuple) -> tuple:
     if OpCode.FROM in data[0]:
         return resolve_FROM(data)
+
     
 @trap
 def resolve_ON(data:tuple) -> tuple:
@@ -102,24 +111,31 @@ def resolve_ON(data:tuple) -> tuple:
     hostnames come in looking like this:
 
     (['adam', 'anna', 'kevin'],)
+    ('adam',)
     """
     global info, config
-    hosts = data[0]
-    if isinstance (hosts, str): hosts = (hosts,)
+    logger.debug(f"{data[0]=}")
+    data = data[0]
+    
+    if isinstance (data, str): data = (data,)
 
     connection_info = []
     for datum in data:
-        hosts = config.get(datum, datum)
+        hosts = config.get(datum, (datum,))
+        logger.debug(f"{datum=} {hosts=}")
         for host in hosts:
             hostinfo = info.get(host)
+            logger.debug(f"{host=} {hostinfo=}")
             if hostinfo is None:
                 logger.error(f"No info on {host}.")
                 sys.exit(os.EX_CONFIG)
             connection_info.append(hostinfo)   
     
+    logger.debug(f"{connection_info=}")
     return connection_info
 
 resolve_TO = resolve_ON
+
 
 @trap
 def resolver(toml_config:SloppyTree, 
@@ -152,11 +168,8 @@ def resolver(toml_config:SloppyTree,
         logger.debug(f"{k=}")
         if k in OpCode:
             try:
-                logger.debug(f"resolve_{k.name}")
-                logger.debug(f"{d[k]=}")
                 d[k] = globals()[f"resolve_{k.name}"](d[k])
             except:
-                logger.info(f"No resolver for resolve_{k.name}")                
                 pass
 
         else:
@@ -165,5 +178,4 @@ def resolver(toml_config:SloppyTree,
         
     t[cmd] = d
     return t
-
 

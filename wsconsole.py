@@ -21,6 +21,7 @@ import cmd
 import contextlib
 import getpass
 mynetid = getpass.getuser()
+import logging
 from   pprint import pprint
 ###
 # Installed libraries.
@@ -31,6 +32,7 @@ from   pprint import pprint
 # From hpclib
 ###
 import linuxutils
+import parsec4
 from   sloppytree import SloppyTree
 from   sqlitedb import SQLiteDB
 from   urdecorators import trap
@@ -60,6 +62,8 @@ __status__ = 'in progress'
 __license__ = 'MIT'
 
 
+logger = logging.getLogger('URLogger')
+
 class WSConsole(cmd.Cmd):
     
     def __init__(self, 
@@ -70,12 +74,46 @@ class WSConsole(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.config = config
         self.db = db
+        self.most_recent_cmd = ""
         self.logger = logger
         self.prompt = "[WSControl]: "
 
 
     @trap
+    def construct_error_message(self, e:parsec4.ParseError) -> str:
+        """
+        Parsec does not provide very good error messages in its native
+        format. The reason is that the monadic construction tends to
+        conceal the overall picture. This function attempts to provide
+        more information, and it is able to do so in most cases.
+        """
+        location = self.most_recent_cmd.find(e.text)
+        if location == -1: 
+            # We were unable to locate the error text. 
+            return f"{e}"
+
+        display_text = self.most_recent_cmd[location-20:location+10]
+        error_line = 20*" " + "^"
+        expected_line = 20*" " + e.expected
+        
+        return "\n".join([display_text, error_line, expected_line])
+        
+
+    @trap
+    def do_help(self, args:str='') -> None:
+        """
+        Explain the program.
+        """
+        print("Put some help here.")
+
+
+    @trap
     def default(self, args:str='') -> None:
+        """
+        This function has most of the error handling in it. Its purpose
+        is to come as close as it can to pointing out the source of
+        the problem in the command.
+        """
         if not os.isatty(0):
             print(args)
 
@@ -83,12 +121,15 @@ class WSConsole(cmd.Cmd):
             sys.exit(os.EX_OK)
 
         try:
-            pprint(resolver(make_tree(wslanguage.parse(args))))
+            self.most_recent_command = args
+            tokens = wslanguage.parse(args)
         except KeyboardInterrupt as e:
             print("You pressed control C. Exiting.")
             sys.exit(os.EX_OK)
-        except Exception as e:
-            print("There is an error somewhere in your request.") 
-            
-        
 
+        except ParseError as e:
+            print("There is an error somewhere in your request.") 
+            print(self.construct_error_message(e))  
+        
+        resolved_command = resolver(self.config, make_tree(tokens))
+        pprint(resolved_command)

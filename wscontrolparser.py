@@ -114,7 +114,7 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
 # Host names are alpha+underscore
 # Filenames also allows dashes, and bash symbols.
 ###
-hostname = lexeme(regex('[A-Za-z_]+'))
+hostname = lexeme(regex('[A-Za-z_\.]+'))
 filename = lexeme(regex('[A-Za-z/\.\-\*_$~]+'))
 
 @lexeme
