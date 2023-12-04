@@ -144,7 +144,7 @@ def resolve_ON(data:tuple) -> tuple:
             hostinfo = info.get(host)
             logger.debug(f"{host=} {hostinfo=}")
             if hostinfo is None:
-                logger.error(f"No info on {host}.")
+                print(f"No connection information for {host}.")
                 sys.exit(os.EX_CONFIG)
             connection_info.append(hostinfo)   
     
