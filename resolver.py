@@ -116,7 +116,6 @@ def resolve_FROM(data:tuple) -> tuple:
 
 @trap
 def resolve_DO(data:tuple) -> tuple:
-    logger.debug(f"{data[0]=}")
     if OpCode.FROM.name in data[0]:
         return resolve_FROM(data)
     return data[0]
@@ -131,7 +130,6 @@ def resolve_ON(data:tuple) -> tuple:
     ('adam',)
     """
     global info, config
-    logger.debug(f"{data[0]=}")
     data = data[0]
     
     if isinstance (data, str): data = (data,)
@@ -139,16 +137,13 @@ def resolve_ON(data:tuple) -> tuple:
     connection_info = []
     for datum in data:
         hosts = resolve_config(datum, (datum,))
-        logger.debug(f"{datum=} {hosts=}")
         for host in hosts:
             hostinfo = info.get(host)
-            logger.debug(f"{host=} {hostinfo=}")
             if hostinfo is None:
                 print(f"No connection information for {host}.")
                 sys.exit(os.EX_CONFIG)
             connection_info.append(hostinfo)   
     
-    logger.debug(f"{connection_info=}")
     return connection_info
 
 resolve_TO = resolve_ON
@@ -182,7 +177,6 @@ def resolver(toml_config:SloppyTree,
     d = t[cmd]
 
     for k in d.keys():
-        logger.debug(f"{k=}")
         if k in OpCode:
             try:
                 d[k] = globals()[f"resolve_{k.name}"](d[k])

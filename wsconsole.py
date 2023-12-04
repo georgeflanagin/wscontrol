@@ -88,15 +88,13 @@ class WSConsole(cmd.Cmd):
         more information, and it is able to do so in most cases.
         """
         location = self.most_recent_cmd.find(e.text)
+        
         if location == -1: 
             # We were unable to locate the error text. 
             return f"{e}"
 
-        display_text = self.most_recent_cmd[location-20:location+10]
-        error_line = 20*" " + "^"
-        expected_line = 20*" " + e.expected
         
-        return "\n".join([display_text, error_line, expected_line])
+        return "\n".join([e.text, " "*e.index + "^", "Excpected "+e.expected])
         
 
     @trap
@@ -121,7 +119,7 @@ class WSConsole(cmd.Cmd):
             sys.exit(os.EX_OK)
 
         try:
-            self.most_recent_command = args
+            self.most_recent_cmd = args
             tokens = wslanguage.parse(args)
         except KeyboardInterrupt as e:
             print("You pressed control C. Exiting.")
