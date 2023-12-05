@@ -16,6 +16,7 @@ if sys.version_info < min_py:
 ###
 # Other standard distro imports
 ###
+from   collections.abc import Iterable
 from   enum import IntEnum
 from   pprint import pprint
 
@@ -205,6 +206,7 @@ def do_clause():
     yield WHITESPACE
     yield do
     action = yield from_file_clause ^ capture_op ^ op_sequence ^ op
+    if isinstance(action, str): action = (action,)
     raise EndOfGenerator((OpCode.DO, action))
 
     

@@ -6,11 +6,11 @@ on (billieholiday, badenpowell) do "date -%s"
 on (sarah, evan, kevin) do "cat /etc/fstab"   
 on (sarah, evan, kevin) do capture "cat /etc/fstab"   
 
-on (billieholiday, adam, thais) do ( capture "tail -1 /etc/fstab", "sed -i 's/141.166.88.99/newhost/' /etc/fstab" )
+on (billieholiday, adam, thais) do ( capture "tail -1 /etc/fstab", "sed -i 's/141.166.88.99/newhost/' /etc/fstab" ) on_error ignore
 
-on adam do from x.sh
-on adam do from local ~/X.sh
-send ~/important.txt to ws.all
+on adam do from x.sh on_error retry
+on adam do from local ~/X.sh on_error fail
+send ~/important.txt to ws.all on_error next
 
 log "hello world"
 stop
