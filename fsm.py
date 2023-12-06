@@ -22,6 +22,8 @@ import contextlib
 import getpass
 mynetid = getpass.getuser()
 import logging
+import socket
+this_host = socket.gethostname()
 
 ###
 # Installed libraries.
@@ -34,6 +36,7 @@ import logging
 from   dorunrun import dorunrun
 import linuxutils
 from   sloppytree import SloppyTree
+from   sqlitedb import SQLiteDB
 from   urdecorators import trap
 
 ###
@@ -46,6 +49,7 @@ from wscontrolparser import OpCode
 ###
 logger = logging.getLogger('URLogger')
 verbose = False
+SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
 
 ###
 # Credits
@@ -59,10 +63,15 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-
 @trap
-def prep_command(t:Iterable) -> str:
-    return f"""'{t}'"""
+def prep_action(t:Union[tuple, str]) -> tuple:
+    """
+    The command string itself may have different kinds of quotes
+    in it.
+    """
+    if isinstance(t, str): t=(t,)
+    t = tuple(s.replace('"', '\\"') for s in t)
+    return t
 
 
 @trap
@@ -79,25 +88,50 @@ def prep_destination(t:SloppyTree) -> str:
 
 
 @trap
-def fsm(prog:SloppyTree, exec:bool) -> int:
+def fsm(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
     """
     Execute the user's request
     """
     request_type = next(iter(dict(prog)))
     prog = prog[request_type]
 
-    if request_type is not OpCode.EXEC:
-        return os.EX_OK
+    foo = f"fsm_do_{request_type.name}"
+    return globals()[foo](prog, db, exec)
 
-    for target in prog[OpCode.ON]:
-        target_string = prep_connection(SloppyTree(target))
-        for action in prog[OpCode.DO]:
-            action_string = prep_command(action)
+
+@trap
+def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+    """
+    prog -- the instructions of the program, now that we have
+        determined the type of request.
+    db -- the database where we record events.
+    exec -- must be True to execute the command. This is to support
+        testing and dry-run functionality.
+    """
+
+    global mynetid, this_host
+
+    ###
+    # A nested loop across each command to be executed first, and
+    # then looping over the hosts. The reason is that the command
+    # is invariant across the hosts, and there is no need to rebuild
+    # it for each one.
+    ###
+    num_actions = 0
+    for action in prog[OpCode.DO]:
+        action_string = prep_action(action)
+        for target in prog[OpCode.ON]:
+            target_string = prep_connection(SloppyTree(target))
             cmd = f"{target_string} {action_string}"
             logger.debug(cmd)
-            result = ( SloppyTree(dorunrun(cmd, timeout=t, return_datatype=dict)) 
-                if exec else
-                    print(cmd) )
+                    
+            if exec:
+                result = SloppyTree(dorunrun(cmd, timeout=5, return_datatype=dict))
+                db.execute_SQL(SQL, mynetid, this_host, cmd, result.code)
+                if result.OK: num_actions +=1 ; continue
+                if prog[OpCode.ONERROR] == OpCode.FAIL: 
+                    sys.exit(result.code)
+            else:
+                result = print(cmd)
 
-    return os.EX_OK
-
+    return num_actions

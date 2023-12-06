@@ -21,6 +21,7 @@ import cmd
 import contextlib
 import getpass
 mynetid = getpass.getuser()
+import inspect
 import logging
 from   pprint import pprint
 import socket
@@ -76,15 +77,13 @@ class WSConsole(cmd.Cmd):
     def __init__(self, 
         myargs:argparse.Namespace, 
         config:SloppyTree, 
-        db:SQLiteDB, 
-        logger:URLogger):
+        db:SQLiteDB):
 
         cmd.Cmd.__init__(self)
         self.myargs = myargs
         self.config = config
         self.db = db
         self.most_recent_cmd = ""
-        self.logger = logger
         self.prompt = "[WSControl]: "
 
 
@@ -103,7 +102,7 @@ class WSConsole(cmd.Cmd):
             return f"{e}"
 
         
-        return "\n".join([e.text, " "*e.index + "^", "Excpected "+e.expected])
+        return "\n".join([e.text, " "*e.index + "^", "Expected: "+e.expected])
         
 
     @trap
@@ -111,7 +110,20 @@ class WSConsole(cmd.Cmd):
         """
         Explain the program.
         """
-        print("Put some help here.")
+        text="""
+    Type in a command to have it parsed and executed. Here are some examples:
+
+      on billieholiday do "date"
+
+    This command will look up the information about the host "billieholiday"
+    and execute the Linux "date" command on that computer. Here is a slightly
+    more complex command.
+
+      on ws.provost do ("tail -1 /etc/fstab", "date")
+
+    The program will look up ws.provost and discover that it means all the
+    workstations owned by the Provost Office. It 
+"""
 
 
     @trap
@@ -140,6 +152,5 @@ class WSConsole(cmd.Cmd):
             return
         
         resolved_command = resolver(self.config, make_tree(tokens))
-        pprint(resolved_command)
-        result = fsm(resolved_command, not self.myargs.no_exec)
-        self.db.execute_SQL(SQL, mynetid, this_host, str(resolved_command), result)
+        logger.debug(f"{resolved_command=}")
+        fsm(resolved_command, self.db, not self.myargs.no_exec)
