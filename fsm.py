@@ -69,7 +69,8 @@ def prep_command(t:Iterable) -> str:
 def prep_connection(t:SloppyTree) -> str:
     h = t.hostname
     u = t.user
-    return f"""ssh -o ConnectTimeout=5 {u}@{h} """"
+    k = t.identityfile[0]
+    return f"""ssh -i {k} -o ConnectTimeout=5 {u}@{h} """
 
 
 @trap
@@ -78,24 +79,25 @@ def prep_destination(t:SloppyTree) -> str:
 
 
 @trap
-def fsm(prog:SloppyTree) -> int:
+def fsm(prog:SloppyTree, exec:bool) -> int:
     """
     Execute the user's request
     """
     request_type = next(iter(dict(prog)))
+    prog = prog[request_type]
 
     if request_type is not OpCode.EXEC:
         return os.EX_OK
 
     for target in prog[OpCode.ON]:
-        target_string = prep_connection(target)
+        target_string = prep_connection(SloppyTree(target))
         for action in prog[OpCode.DO]:
-            action_string = prep_command(action):
+            action_string = prep_command(action)
             cmd = f"{target_string} {action_string}"
             logger.debug(cmd)
-            result = SloppyTree(dorunrun(cmd, timeout=t, return_datatype=dict))
-            if not result.OK:
-                pass 
+            result = ( SloppyTree(dorunrun(cmd, timeout=t, return_datatype=dict)) 
+                if exec else
+                    print(cmd) )
 
     return os.EX_OK
 

@@ -103,7 +103,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     ###
     # Step 3: create the interactive console, and begin to read
     # the input.
-    console=WSConsole(config, db, logger)
+    console=WSConsole(myargs, config, db, logger)
     try:
         console.cmdloop(intro=f"Welcome to WSControl. Version {linuxutils.version(False)}")
     except KeyboardInterrupt as e:
@@ -140,6 +140,9 @@ if __name__ == '__main__':
         choices=range(logging.FATAL, logging.NOTSET, -10), 
         default=logging.DEBUG, 
         help=f"Logging level, defaults to {logging.DEBUG}")
+
+    parser.add_argument('--no-exec', action='store_true', 
+        help="For testing; this generates all the opcodes, but does not execute the command.")
 
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name (for non-interactive use.)")

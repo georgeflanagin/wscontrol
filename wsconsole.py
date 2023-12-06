@@ -44,6 +44,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that are a part of this project
 ###
+from fsm import fsm
 from resolver import resolver
 from wscontrolparser import wslanguage, make_tree
 
@@ -67,17 +68,19 @@ __license__ = 'MIT'
 
 logger = logging.getLogger('URLogger')
 
-SQL = """INSERT INTO master (who, host, command) VALUES (?, ?, ?)"""
+SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
 
 
 class WSConsole(cmd.Cmd):
     
     def __init__(self, 
+        myargs:argparse.Namespace, 
         config:SloppyTree, 
         db:SQLiteDB, 
         logger:URLogger):
 
         cmd.Cmd.__init__(self)
+        self.myargs = myargs
         self.config = config
         self.db = db
         self.most_recent_cmd = ""
@@ -138,4 +141,5 @@ class WSConsole(cmd.Cmd):
         
         resolved_command = resolver(self.config, make_tree(tokens))
         pprint(resolved_command)
-        self.db.execute_SQL(SQL, mynetid, this_host, str(resolved_command))
+        result = fsm(resolved_command, not self.myargs.no_exec)
+        self.db.execute_SQL(SQL, mynetid, this_host, str(resolved_command), result)
