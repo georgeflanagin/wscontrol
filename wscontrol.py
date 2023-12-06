@@ -103,6 +103,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     ###
     # Step 3: create the interactive console, and begin to read
     # the input.
+    os.system('clear')
     console=WSConsole(myargs, config, db)
     try:
         console.cmdloop(intro=f"Welcome to WSControl. Version {linuxutils.version(False)}")
