@@ -69,4 +69,42 @@ entire EBNF grammar --- interested readers can examine the code in
 `wscontrolparser.py` --- a few examples may suffice for most users. 
 
 The language is as small as possible, and the parsing is entirely contained
-in the source code file, `wscontrolparser.py`.
+in the source code file, `wscontrolparser.py`. The following is an 
+approximate grammar for it, leaving out the most trivial definitions:
+
+
+`hostname` -- string of alpha, underscore, and the dot.
+
+`hostnames` -- One or more `hostname` elements, enclosed in parens,
+and separated by commas.
+
+`filename` -- string of alphanumeric, underscore, dash, dot, 
+dollar sign, star, tilde, and plus. This definition allows for
+the use of wildcard file names and environment variables, and `wscontrol`
+does allow them and expand them. Note that a filename should not be
+quoted, and the implication is that they do not have embedded spaces.
+
+`filenames` -- One or more `filename` elements, enclosed in parens, and
+separated by commas. 
+
+`context := hostnames | hostname`
+
+`op` -- a quoted string that represents something to "do."
+
+`op_sequence` -- One or more `op` elements, enclosed in parens, and 
+separated by commas.
+
+`from_file_clause := from + filename` -- represents `op` elements to
+be read from a file.
+
+`do_clause := "do"  [op_sequence | op]`
+
+`exec_command := context do_clause`
+
+`send_command := "send" [filenames | filename] "to" context`
+
+`log_command := "log" characters-until-EOL` 
+
+
+
+
