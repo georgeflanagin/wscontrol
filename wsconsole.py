@@ -23,6 +23,9 @@ import getpass
 mynetid = getpass.getuser()
 import logging
 from   pprint import pprint
+import socket
+this_host = socket.gethostname()
+
 ###
 # Installed libraries.
 ###
@@ -63,6 +66,9 @@ __license__ = 'MIT'
 
 
 logger = logging.getLogger('URLogger')
+
+SQL = """INSERT INTO master (who, host, command) VALUES (?, ?, ?)"""
+
 
 class WSConsole(cmd.Cmd):
     
@@ -132,3 +138,4 @@ class WSConsole(cmd.Cmd):
         
         resolved_command = resolver(self.config, make_tree(tokens))
         pprint(resolved_command)
+        self.db.execute_SQL(SQL, mynetid, this_host, str(resolved_command))

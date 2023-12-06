@@ -2,6 +2,10 @@
 # This is the configuration file for wscontrol
 ###
 
+########################################################
+# Section 1: Host definitions.
+########################################################
+
 ws.donald = [ 'enterprise' ]
 
 ws.parish = [ 
@@ -28,4 +32,9 @@ ws.linux8 = [
     'evan', 'irene', 'justin', 'kevin', 'michael',
     'sarah', 'enterprise' ]
 
+########################################################
+# Section 2: commands
+########################################################
+
+cmd.newuser = "useradd -m {} -u $(id {} 2>/dev/null) && usermod -aG users {}"
 
