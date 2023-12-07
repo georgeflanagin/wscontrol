@@ -71,7 +71,7 @@ def prep_action(t:Union[tuple, str]) -> tuple:
     """
     if isinstance(t, str): t=(t,)
     t = tuple(s.replace('"', '\\"') for s in t)
-    return t
+    return " && ".join(t)
 
 
 @trap
@@ -126,6 +126,7 @@ def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
             logger.debug(cmd)
                     
             if exec:
+                print(cmd)
                 result = SloppyTree(dorunrun(cmd, timeout=5, return_datatype=dict))
                 db.execute_SQL(SQL, mynetid, this_host, cmd, result.code)
                 if result.OK: num_actions +=1 ; continue

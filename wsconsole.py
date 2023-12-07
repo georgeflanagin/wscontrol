@@ -106,10 +106,15 @@ class WSConsole(cmd.Cmd):
         
 
     @trap
-    def do_define(self, args:str="") -> None:
+    def do_explain(self, args:str="") -> None:
         """
-        Look up a symbol, and show the user what it means.
+        Syntax: explain {symbol}
+    
+        Look up a symbolic name (the name of a host or group of hosts), and 
+        show the user what it means.
         """ 
+        if not args: return self.do_help('explain')
+
         arg_list = args.split('.')
         t = self.config
         for arg in arg_list:
@@ -124,18 +129,23 @@ class WSConsole(cmd.Cmd):
             return
 
         if (d:=netutils.get_ssh_host_info(args)):
-            print(f"{args} is a host, with this connection information:\n{d}")
+            print(f"{args} is a host, with this connection information:\n\n{d}")
             return
 
         print(f"{args} must not be a piece of config data.")
 
 
     @trap
-    def do_help(self, args:str='') -> None:
+    def do_general(self, args:str='') -> None:
         """
         Explain the program.
         """
         text="""
+    
+    This program supports autocomplete via the TAB key. Also, if you want
+    to execute a shell command from within the program, wscontrol interprets
+    anything that starts with a bang (!) as a shell command.
+
     Type in a command to have it parsed and executed. Here are some examples:
 
       on billieholiday do "date"
@@ -150,7 +160,8 @@ class WSConsole(cmd.Cmd):
     workstations owned by the Provost Office. On each of those computers,
     it will then execute the two commands shown, in the order that they
     appear.
-"""
+
+    """
         print(text)
 
 
@@ -166,6 +177,10 @@ class WSConsole(cmd.Cmd):
 
         if args.lower() in ("stop", "quit", "exit"):
             sys.exit(os.EX_OK)
+
+        if args.startswith('!'):
+            os.system(args[1:])
+            return
 
         try:
             self.most_recent_cmd = args
