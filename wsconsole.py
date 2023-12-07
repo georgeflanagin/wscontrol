@@ -35,7 +35,7 @@ this_host = socket.gethostname()
 ###
 # From hpclib
 ###
-import linuxutils
+import netutils
 import parsec4
 from   sloppytree import SloppyTree
 from   sqlitedb import SQLiteDB
@@ -84,7 +84,7 @@ class WSConsole(cmd.Cmd):
         self.config = config
         self.db = db
         self.most_recent_cmd = ""
-        self.prompt = "[WSControl]: "
+        self.prompt = "\n[WSControl]: "
 
 
     @trap
@@ -106,6 +106,31 @@ class WSConsole(cmd.Cmd):
         
 
     @trap
+    def do_define(self, args:str="") -> None:
+        """
+        Look up a symbol, and show the user what it means.
+        """ 
+        arg_list = args.split('.')
+        t = self.config
+        for arg in arg_list:
+            try:
+                t = t[arg]
+            except KeyError as e:
+                print(f"{args} not found in config file.")
+                return
+
+        if t: 
+            print(f"{args} is {t}")
+            return
+
+        if (d:=netutils.get_ssh_host_info(args)):
+            print(f"{args} is a host, with this connection information:\n{d}")
+            return
+
+        print(f"{args} must not be a piece of config data.")
+
+
+    @trap
     def do_help(self, args:str='') -> None:
         """
         Explain the program.
@@ -122,8 +147,11 @@ class WSConsole(cmd.Cmd):
       on ws.provost do ("tail -1 /etc/fstab", "date")
 
     The program will look up ws.provost and discover that it means all the
-    workstations owned by the Provost Office. It 
+    workstations owned by the Provost Office. On each of those computers,
+    it will then execute the two commands shown, in the order that they
+    appear.
 """
+        print(text)
 
 
     @trap

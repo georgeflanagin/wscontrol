@@ -23,6 +23,7 @@ if sys.version_info < min_py:
 ###
 import argparse
 import contextlib
+from   datetime import datetime
 import getpass
 import logging
 import tomllib
@@ -106,7 +107,9 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     os.system('clear')
     console=WSConsole(myargs, config, db)
     try:
-        console.cmdloop(intro=f"Welcome to WSControl. Version {linuxutils.version(False)}")
+        commit=linuxutils.version(False)
+        d = str(datetime.fromtimestamp(os.stat(__file__).st_mtime))[:19]
+        console.cmdloop(intro=f"Welcome to WSControl. Commit ID {commit}. Revised {d}")
     except KeyboardInterrupt as e:
         print("You pressed control-C")
         logger.info("Leaving via control-C")

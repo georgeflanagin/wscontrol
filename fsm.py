@@ -135,3 +135,8 @@ def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
                 result = print(cmd)
 
     return num_actions
+
+
+@trap
+def fsm_do_SEND(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+    pass
