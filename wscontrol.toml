@@ -32,6 +32,17 @@ ws.linux8 = [
     'evan', 'irene', 'justin', 'kevin', 'michael',
     'sarah', 'enterprise' ]
 
+ws.nas = [ 'truenas', 'newnas', 'trueuser' ]
+
+###
+# Most of the parameters for connections are in the SSH
+# config file. The SSH config file is robust and standard,
+# so its use is preferred.
+###
+# Default timeout for network connections.
+###
+default_timeout = 4 
+
 ########################################################
 # Section 2: commands
 ########################################################
