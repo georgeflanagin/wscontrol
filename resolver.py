@@ -42,6 +42,7 @@ from   urlogger import URLogger, piddly
 # imports and objects that are a part of this project
 ###
 from   wscontrolparser import OpCode
+from   wsconfig import WSConfig
 
 ###
 # Global objects and initializations
@@ -62,16 +63,13 @@ __license__ = 'MIT'
 
 info = netutils.get_ssh_host_info('all')
 logger = logging.getLogger('URLogger')
-config = None
 
 @trap
 def resolve_config(search_term:str, not_found:object) -> object:
     """
     Look through our config information for a symbol.
     """
-    global config
-
-    d = config
+    d = WSConfig()
     for t in search_term.split('.'):    
         d = d.get(t)
         if d is None: return not_found
@@ -129,7 +127,7 @@ def resolve_ON(data:tuple) -> tuple:
     (['adam', 'anna', 'kevin'],)
     ('adam',)
     """
-    global info, config
+    global info
     data = data[0]
     
     if isinstance (data, str): data = (data,)
@@ -150,8 +148,7 @@ resolve_TO = resolve_ON
 
 
 @trap
-def resolver(toml_config:SloppyTree, 
-        t:SloppyTree) -> SloppyTree:
+def resolver(t:SloppyTree) -> SloppyTree:
     """
     This function works its way through the tree of symbols looking for
     ones that are un-resolved. Examples are: 
@@ -164,14 +161,12 @@ def resolver(toml_config:SloppyTree,
     have resolvers identified by name: OpCode.ON -> resolve_ON, and so
     on. If they don't, then no changes are made.
 
-    toml_config -- configuration data read from the .toml file.
     t -- The parse tree representing the user's command.
 
     returns -- The modified (resolved) parse tree.
 
     """
-    global config
-    config = toml_config
+    config = WSConfig()
 
     cmd = next(iter(dict(t)))
     d = t[cmd]

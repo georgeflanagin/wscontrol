@@ -48,6 +48,7 @@ from   urlogger import URLogger
 from fsm import fsm
 from resolver import resolver
 from wscontrolparser import wslanguage, make_tree
+from wsconfig import WSConfig
 
 ###
 # Global objects and initializations
@@ -76,12 +77,10 @@ class WSConsole(cmd.Cmd):
     
     def __init__(self, 
         myargs:argparse.Namespace, 
-        config:SloppyTree, 
         db:SQLiteDB):
 
         cmd.Cmd.__init__(self)
         self.myargs = myargs
-        self.config = config
         self.db = db
         self.most_recent_cmd = ""
         self.prompt = "\n[WSControl]: "
@@ -116,7 +115,7 @@ class WSConsole(cmd.Cmd):
         if not args: return self.do_help('explain')
 
         arg_list = args.split('.')
-        t = self.config
+        t = WSConfig()
         for arg in arg_list:
             try:
                 t = t[arg]
@@ -194,6 +193,6 @@ class WSConsole(cmd.Cmd):
             print(self.construct_error_message(e))  
             return
         
-        resolved_command = resolver(self.config, make_tree(tokens))
+        resolved_command = resolver(make_tree(tokens))
         logger.debug(f"{resolved_command=}")
         fsm(resolved_command, self.db, not self.myargs.no_exec)

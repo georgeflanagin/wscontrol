@@ -47,7 +47,7 @@ from   urlogger import URLogger, piddly
 # imports and objects that are a part of this project
 ###
 from wsconsole import WSConsole
-
+from wsconfig import WSConfig
 
 ###
 # Global objects and initializations
@@ -89,23 +89,13 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     ###
     # Step 2: read the configuration.
     ###
-    if not os.path.exists(myargs.config):
-        logger.error(f"{myargs.config} not found.")
-        sys.exit(os.EX_IOERR)
-
-    try:
-        config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
-        logger.info(f"{myargs.config} read.")
-
-    except tomllib.TOMLDecodeError as e:
-        logger.error(e)
-        sys.exit(os.EX_CONFIG)
+    config = WSConfig(myargs.config)
     
     ###
     # Step 3: create the interactive console, and begin to read
     # the input.
     os.system('clear')
-    console=WSConsole(myargs, config, db)
+    console=WSConsole(myargs, db)
     try:
         commit=linuxutils.version(False)
         d = str(datetime.fromtimestamp(os.stat(__file__).st_mtime))[:19]

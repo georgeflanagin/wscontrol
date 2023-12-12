@@ -67,8 +67,8 @@ class WSConfig:
             sys.exit(os.EX_IOERR)
 
         try:
-            cls._config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
-            logger.info(f"{myargs.config} read.")
+            cls._config = SloppyTree(tomllib.load(open(args[0], 'rb')))
+            logger.info(f"{args[0]} read.")
 
         except tomllib.TOMLDecodeError as e:
             logger.error(e)
