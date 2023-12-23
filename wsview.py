@@ -59,11 +59,12 @@ __status__ = 'in progress'
 __license__ = 'MIT'
 
 DAT_FILE=os.path.join(os.getcwd(), 'info.dat')
+padding = lambda x: " "*x
 
 @trap
 def get_memory(ws:str) -> dict:
     """
-    Collects and returns used and total  memory for the workstation
+    Collects and returns used and total memory for the workstation
     """
     d = {}
 
@@ -74,13 +75,13 @@ def get_memory(ws:str) -> dict:
         total = float(result.split()[7])
 
         d["used"] = used
-        d["used_ratio"] = used * 100 / total
         d["total"] = total
-   
-    except:
+        d["how_busy"] = used / total
+
+    except Exception as e:
         d["used"] = "n/a"
         d["total"] = "n/a"
-
+        d["how_busy"] = 0
     return d
 
 @trap
@@ -97,11 +98,12 @@ def get_cpu(ws:str) -> dict:
         used = dorunrun(cmd_used, return_datatype=str).split()[9]
         used = float(used.split(",")[0])
         d["used"] = used
-        d["used_ratio"] = used*100 / total  #calculate ration of used cpu
         d["total"] = total
+        d["how_busy"] = used / total
     except:
         d["used"] = "n/a"
         d["total"] = "n/a"
+        d["how_busy"] = 0
     return d
 
 @trap
@@ -131,11 +133,29 @@ def prepare_data(ws:str):
     """
     mem = get_memory(ws)
     cpu = get_cpu(ws)
-    record_info(ws, cpu, mem)
-    r_c = row(cpu["used"], cpu["total"], "C")
-    r_m = row(mem["used"], mem["total"], "M")
     
-    return " ".join((r_c, r_m))
+    #insert numerical entries into the database
+    record_info(ws, cpu, mem)
+    
+    r_c = ""
+    r_m = ""
+    warning = ""
+
+    #prepare the graphs
+    if "n/a" in cpu.values(): 
+        r_c = "No CPU information." +padding(23)
+    else:
+        r_c = row(cpu["used"], cpu["total"], "C")
+
+    if "n/a" in mem.values():
+        r_m = "No memory information."
+    else:
+        r_m = row(mem["used"], mem["total"], "M")
+
+    if cpu["how_busy"] > 0.75 or mem["how_busy"] > 0.75:
+        warning = "Almost Full"
+
+    return " ".join((r_c, r_m, warning))
 
 def display_data(stdscr: object):
     """
@@ -219,12 +239,10 @@ def display_data(stdscr: object):
                 with open(DAT_FILE) as infodat:
                     info = infodat.readlines()
                     for idx, graph in enumerate(sorted(info)):
-                        if 'n/a' in graph: # red, if the node status is down or if numof cores used is > 52
+                        if 'No' in graph: # red, if the CPU or memory availability could not be accessed.
                             window2.addstr(idx+2, 0, graph, RED_AND_BLACK)
-                        #elif (float(node.split()[2])>52.00):
-                        #    window2.addstr(idx+2, 0, node, RED_AND_BLACK)
-                        #elif how_busy(node) >= 0.75: #if node is more than 75% full
-                        #    window2.addstr(idx+2, 0, node, YELLOW_AND_BLACK)
+                        elif "Almost Full" in graph: #if node is more than 75% full
+                            window2.addstr(idx+2, 0, graph, YELLOW_AND_BLACK)
                         else:
                             window2.addstr(idx+2, 0, graph, GREEN_AND_BLACK)
                 window2.addstr(len(info)+2, 0, f'Last updated {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}', WHITE_AND_BLACK)
@@ -297,7 +315,7 @@ def fork_ssh(ws:str) -> None:
 
                 # each child process locks, writes to and unlocks the file
                 fcntl.lockf(infodat, fcntl.LOCK_EX)
-                infodat.write(f'{ws.ljust(7)} {data}\n')
+                infodat.write(f'{ws.ljust(13)} {data}\n')
                 infodat.close()
                 
             except Exception as e:
@@ -318,12 +336,15 @@ def fork_ssh(ws:str) -> None:
 
 @trap
 def wsview_main() -> int: 
+    #for ws in get_list_of_ws(myargs.ws):
+    #    print(ws, prepare_data(ws))    
     #print(get_memory("thais"))
-    #print(get_cpu("adam"))
+    #print(get_cpu(ws))
     #get_list_of_ws("all")
     #record_info("adam")
     #draw_data("parish")
-    fork_ssh("parish")
+    
+    fork_ssh(myargs.ws)
     wrapper(display_data)
     return os.EX_OK
 
@@ -335,12 +356,14 @@ def wsview_main() -> int:
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(prog="activityview",
-        description="What activityview does, activityview does best.")
+    parser = argparse.ArgumentParser(prog="wsview",
+        description="What wsview does, wsview does best.")
     parser.add_argument('-r', '--refresh', type=int, default=60,
         help="Refresh interval defaults to 60 seconds. Set to 0 to only run once.")
     parser.add_argument('-i', '--input', type=str, default="wscontrol.toml",
         help="If present, --input is interpreted to be a whitespace delimited file of host names.")
+    parser.add_argument('--ws', type=str, default="parish", required = True,
+        help="Input category of workstations to display. Ex: all, parish, linux8")
     parser.add_argument('--db', type=str, default="wscontrol.db",
         help="The program will insert data into the database.")
     parser.add_argument('-o', '--output', type=str, default="",

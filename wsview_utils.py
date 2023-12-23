@@ -173,7 +173,7 @@ def header():
     """
     The header of the window.
     """
-    header = "WS".ljust(8)+"Cores"+padding(38)+"Memory\n"
+    header = "Workstation".ljust(14)+"Cores"+padding(38)+"Memory\n"
     return header
 
 @trap
@@ -187,7 +187,7 @@ def help_msg() -> str:
     c = "The first graph is displaying availability of CPUs.\n"
     d = "The second graph is displaying memory availability.\n\n"
     e = "If the graph is colored in green, that means that its load is less than 75% in terms of both memory and CPU usage.\n"
-    f = "If the graph is colored yellow, that means that either WS's memory or CPUs are more than 75% occupied.\n"
+    f = "If the graph is colored yellow or has Almost Full sign, that means that either WS's memory or CPUs are more than 75% occupied.\n"
     g = "The red color signifies anomaly - WS could not be accessed.\n"
 
     msg = "".join((a, b, c, d, e, f, g))
@@ -196,8 +196,8 @@ def help_msg() -> str:
 
 @trap
 def example_map():
-    graph1 = "adam    [________________________________________] [MMMMMM__________________________________]"
-    graph2 = "alexis  [________________________________________] [________________________________________]"
+    graph1 = "adam          [________________________________________] [MMMMMM__________________________________] Almost Full"
+    graph2 = "alexis        [________________________________________] [________________________________________] "
 
     return list((graph1, graph2))
 
