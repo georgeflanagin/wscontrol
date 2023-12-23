@@ -113,7 +113,10 @@ def get_list_of_ws(lst:str):
     """
     with open(myargs.input, "r") as f:
         contents = toml.load(f)
-    result = contents["ws"][lst]
+    try:
+        result = contents["ws"][lst]
+    except:
+        result = None
     return result
 
 @trap
@@ -245,8 +248,8 @@ def display_data(stdscr: object):
                             window2.addstr(idx+2, 0, graph, YELLOW_AND_BLACK)
                         else:
                             window2.addstr(idx+2, 0, graph, GREEN_AND_BLACK)
-                window2.addstr(len(info)+2, 0, f'Last updated {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}', WHITE_AND_BLACK)
-                window2.addstr(len(info)+3, 0, "Press q to quit, h for help OR any other key to refresh.", WHITE_AND_BLACK)
+                window2.addstr(len(info)+3, 0, f'Last updated {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}', WHITE_AND_BLACK)
+                window2.addstr(len(info)+4, 0, "Press q to quit, h for help OR any other key to refresh.", WHITE_AND_BLACK)
                 window2.refresh()    
         except:
             pass 
@@ -376,6 +379,14 @@ if __name__ == '__main__':
 
     verbose = myargs.verbose if logging.NOTSET <= myargs.verbose <= logging.CRITICAL else logging.DEBUG
     logger = wsview_utils.URLogger(level=myargs.verbose)
+    
+    if get_list_of_ws(myargs.ws) is None:
+        with open(myargs.input, "r") as f:
+            contents = toml.load(f)
+            contents = [x for x in contents.values()]
+            print(f"Try one of the existing lists {contents}")
+        sys.exit()
+
     try:
         db = sqlitedb.SQLiteDB(myargs.db)
     except:
