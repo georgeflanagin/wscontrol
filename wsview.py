@@ -33,17 +33,15 @@ import toml
 import math
 mynetid = getpass.getuser()
 
-#import view_utils
-#from view_utils import *
+###
+# imports and objects that are a part of this project
+###
 from   wrapper import trap
 from dorunrun import dorunrun
 import sqlitedb
 from sqlitedb import SQLiteDB
 import wsview_utils
 from wsview_utils import * 
-###
-# imports and objects that are a part of this project
-###
 verbose = False
 
 ###
@@ -76,7 +74,7 @@ def get_memory(ws:str) -> dict:
 
         d["used"] = used
         d["total"] = total
-        d["how_busy"] = used / total
+        d["how_busy"] = used / total #this is to determine ws's load
 
     except Exception as e:
         d["used"] = "n/a"
@@ -379,12 +377,16 @@ if __name__ == '__main__':
 
     verbose = myargs.verbose if logging.NOTSET <= myargs.verbose <= logging.CRITICAL else logging.DEBUG
     logger = wsview_utils.URLogger(level=myargs.verbose)
-    
+   
+    # add a check for --ws argument validity and suggest valid entry
     if get_list_of_ws(myargs.ws) is None:
         with open(myargs.input, "r") as f:
             contents = toml.load(f)
-            contents = [x for x in contents.values()]
-            print(f"Try one of the existing lists {contents}")
+            for k, v in contents.items():
+                if k == "ws":
+                    suggested_lst = v.keys()
+                    print("Error in the provided --ws argument")
+                    print(f'Try one of the existing lists: {", ".join(list(suggested_lst))}')
         sys.exit()
 
     try:
