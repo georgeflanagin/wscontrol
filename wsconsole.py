@@ -38,7 +38,7 @@ this_host = socket.gethostname()
 import netutils
 import parsec4
 from   sloppytree import SloppyTree
-from   sqlitedb import SQLiteDB
+import sqlitedb
 from   urdecorators import trap
 from   urlogger import URLogger
 
@@ -75,13 +75,10 @@ SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
 
 class WSConsole(cmd.Cmd):
     
-    def __init__(self, 
-        myargs:argparse.Namespace, 
-        db:SQLiteDB):
+    def __init__(self, myargs:argparse.Namespace):
 
         cmd.Cmd.__init__(self)
         self.myargs = myargs
-        self.db = db
         self.most_recent_cmd = ""
         self.prompt = "\n[WSControl]: "
 
@@ -103,36 +100,6 @@ class WSConsole(cmd.Cmd):
         
         return "\n".join([e.text, " "*e.index + "^", "Expected: "+e.expected])
         
-
-    @trap
-    def do_explain(self, args:str="") -> None:
-        """
-        Syntax: explain {symbol}
-    
-        Look up a symbolic name (the name of a host or group of hosts), and 
-        show the user what it means.
-        """ 
-        if not args: return self.do_help('explain')
-
-        arg_list = args.split('.')
-        t = WSConfig()
-        for arg in arg_list:
-            try:
-                t = t[arg]
-            except KeyError as e:
-                print(f"{args} not found in config file.")
-                return
-
-        if t: 
-            print(f"{args} is {t}")
-            return
-
-        if (d:=netutils.get_ssh_host_info(args)):
-            print(f"{args} is a host, with this connection information:\n\n{d}")
-            return
-
-        print(f"{args} must not be a piece of config data.")
-
 
     @trap
     def do_general(self, args:str='') -> None:
@@ -162,6 +129,36 @@ class WSConsole(cmd.Cmd):
 
     """
         print(text)
+
+
+    @trap
+    def do_whatis(self, args:str="") -> None:
+        """
+        Syntax: whatis {symbol}
+    
+        Look up a symbolic name (example: the name of a host or 
+        group of hosts), and show the user what it means.
+        """ 
+        if not args: return self.do_help('explain')
+
+        arg_list = args.split('.')
+        t = WSConfig()
+        for arg in arg_list:
+            try:
+                t = t[arg]
+            except KeyError as e:
+                print(f"{args} not found in config file.")
+                return
+
+        if t: 
+            print(f"{args} is {t}")
+            return
+
+        if (d:=netutils.get_ssh_host_info(args)):
+            print(f"{args} is a host, with this connection information:\n\n{d}")
+            return
+
+        print(f"{args} must not be a piece of config data.")
 
 
     @trap
@@ -195,4 +192,4 @@ class WSConsole(cmd.Cmd):
         
         resolved_command = resolver(make_tree(tokens))
         logger.debug(f"{resolved_command=}")
-        fsm(resolved_command, self.db, not self.myargs.no_exec)
+        fsm(resolved_command, not self.myargs.no_exec)

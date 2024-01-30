@@ -36,7 +36,7 @@ this_host = socket.gethostname()
 from   dorunrun import dorunrun
 import linuxutils
 from   sloppytree import SloppyTree
-from   sqlitedb import SQLiteDB
+import sqlitedb
 from   urdecorators import trap
 
 ###
@@ -88,7 +88,7 @@ def prep_destination(t:SloppyTree) -> str:
 
 
 @trap
-def fsm(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+def fsm(prog:SloppyTree, exec:bool) -> int:
     """
     Execute the user's request
     """
@@ -96,20 +96,20 @@ def fsm(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
     prog = prog[request_type]
 
     foo = f"fsm_do_{request_type.name}"
-    return globals()[foo](prog, db, exec)
+    return globals()[foo](prog, exec)
 
 
 @trap
-def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+def fsm_do_EXEC(prog:SloppyTree, exec:bool) -> int:
     """
     prog -- the instructions of the program, now that we have
         determined the type of request.
-    db -- the database where we record events.
     exec -- must be True to execute the command. This is to support
         testing and dry-run functionality.
     """
 
     global mynetid, this_host
+    db = sqlitedb.SQLiteDBinstance()
 
     ###
     # A nested loop across each command to be executed first, and
@@ -129,7 +129,10 @@ def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
                 print(cmd)
                 result = SloppyTree(dorunrun(cmd, timeout=5, return_datatype=dict))
                 db.execute_SQL(SQL, mynetid, this_host, cmd, result.code)
-                if result.OK: num_actions +=1 ; continue
+                if result.OK: 
+                    num_actions +=1 
+                    print(result.stdout)
+                    continue
                 if prog[OpCode.ONERROR] == OpCode.FAIL: 
                     sys.exit(result.code)
             else:
@@ -139,5 +142,5 @@ def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
 
 
 @trap
-def fsm_do_SEND(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+def fsm_do_SEND(prog:SloppyTree, exec:bool) -> int:
     pass

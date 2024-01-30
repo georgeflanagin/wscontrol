@@ -46,6 +46,7 @@ from   urlogger import URLogger, piddly
 ###
 # imports and objects that are a part of this project
 ###
+import logo
 from wsconsole import WSConsole
 from wsconfig import WSConfig
 
@@ -76,12 +77,8 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     ###
     # Step 1: get the database open.
     ###
-    if not os.path.exists(myargs.db):
-        logger.error(f"{myargs.db} does not exist.")
-        sys.exit(os.EX_IOERR)
-
-    db = SQLiteDB(myargs.db)
-    if not db.OK: 
+    db = sqlitedb.SQLiteDBinstance(myargs.db)
+    if not db or not db.OK: 
         logger.error(f"unable to open {myargs.db}")
         sys.exit(os.EX_CONFIG)
     logger.info(f"{myargs.db} is open.")
@@ -95,7 +92,8 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     # Step 3: create the interactive console, and begin to read
     # the input.
     os.system('clear')
-    console=WSConsole(myargs, db)
+    print(logo.LOGO)
+    console=WSConsole(myargs)
     try:
         commit=linuxutils.version(False)
         d = str(datetime.fromtimestamp(os.stat(__file__).st_mtime))[:19]
