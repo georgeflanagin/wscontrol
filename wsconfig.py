@@ -18,7 +18,7 @@ if sys.version_info < min_py:
 ###
 import logging
 import tomllib
-import datetime
+import time
 
 ###
 # Installed libraries.
@@ -63,15 +63,17 @@ class WSConfig:
     @trap
     def __new__(cls, *args, **kwargs):
         config_file_modified = os.path.getmtime(f"{args[0]}")
-        
-        if cls._config: return cls._config
+
+        # if config file did not change, return previously created object        
+        if cls._config and not (config_file_modified > object_created): 
+            return cls._config
 
         if not os.path.exists(args[0]):
             logger.error(f"{args[0]} not found.")
             sys.exit(os.EX_IOERR)
 
         try:
-            object_created = datetime.datetime.now()
+            object_created = time.time()
             
             # if the configuration file was modified, update the contents of the object.
             if config_file_modified > object_created:

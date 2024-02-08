@@ -47,7 +47,7 @@ from   urlogger import URLogger, piddly
 # imports and objects that are a part of this project
 ###
 from wsconsole import WSConsole
-
+from wsconfig import WSConfig
 
 ###
 # Global objects and initializations
@@ -94,7 +94,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
         sys.exit(os.EX_IOERR)
 
     try:
-        config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
+        config = SloppyTree(tomllib.load(open(myargs.config, 'rb'))) #WSConfig(myargs.config)  #
         logger.info(f"{myargs.config} read.")
 
     except tomllib.TOMLDecodeError as e:
