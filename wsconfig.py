@@ -18,6 +18,7 @@ if sys.version_info < min_py:
 ###
 import logging
 import tomllib
+import datetime
 
 ###
 # Installed libraries.
@@ -57,9 +58,12 @@ logger = logging.getLogger('URLogger')
 
 class WSConfig:
     _config = None
+    object_created = None
 
     @trap
     def __new__(cls, *args, **kwargs):
+        config_file_modified = os.path.getmtime(f"{args[0]}")
+        
         if cls._config: return cls._config
 
         if not os.path.exists(args[0]):
@@ -67,12 +71,23 @@ class WSConfig:
             sys.exit(os.EX_IOERR)
 
         try:
-            cls._config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
-            logger.info(f"{myargs.config} read.")
+            object_created = datetime.datetime.now()
+            
+            # if the configuration file was modified, update the contents of the object.
+            if config_file_modified > object_created:
+                cls._config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
+                logger.info(f"{myargs.config} read.")
 
         except tomllib.TOMLDecodeError as e:
             logger.error(e)
             sys.exit(os.EX_CONFIG)
-        
-            
 
+class MyArgs:
+    config = "/home/alina/wscontrol/wscontrol.toml"
+
+if __name__ == "__main__":
+    myargs = MyArgs()
+    
+    # Instantiate WSConfig to load the configuration
+    config_instance = WSConfig(myargs.config)
+    print(config_instance)

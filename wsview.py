@@ -67,7 +67,7 @@ def get_memory(ws:str) -> dict:
     d = {}
 
     try:
-        cmd = f"ssh -o ConnectTimeout=1 {ws} free"
+        cmd = f"ssh -o ConnectTimeout=1 @{ws} free"
         result = dorunrun(cmd, return_datatype = str)
         used = float(result.split()[8])
         total = float(result.split()[7])
