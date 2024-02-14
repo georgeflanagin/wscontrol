@@ -16,7 +16,9 @@ if sys.version_info < min_py:
 ###
 # Other standard distro imports
 ###
+import argparse
 from   collections.abc import Iterable
+import contextlib
 from   enum import IntEnum
 from   pprint import pprint
 
@@ -37,12 +39,14 @@ from   urdecorators import trap
 ###
 # imports and objects that are a part of this project
 ###
-
+import resolver
+from parsertests import parsertests
+import wsconfig
 
 ###
 # Global objects and initializations
 ###
-verbose = False
+use_resolver = False
 
 ###
 # Credits
@@ -58,13 +62,13 @@ __license__ = 'MIT'
 
 
 class OpCode(IntEnum):
-    OK = 0
+    OK          = 0
 
     # Actions to take if there are problems.
-    IGNORE = 8
-    FAIL = 9
-    NEXT = 10
-    RETRY = 11
+    IGNORE      = 8
+    FAIL        = 9
+    NEXT        = 10
+    RETRY       = 11
 
     # Instructions to "do something" or "identify something"
     CAPTURE     = 16
@@ -81,12 +85,18 @@ class OpCode(IntEnum):
     LITERAL     = 27
     
 
+    # Typing info for data
+    HOST        = 64
+    FILE        = 65
+    ACTION      = 66
+    
     # Atomic instructions that can appear anywhere. The
     # NOP instruction can replace any of the others, effectively
     # commenting out a portion of the code.
-    NOP = 126
-    STOP = 125
-    LOG = 124
+    LOG         = 124
+    STOP        = 125
+    NOP         = 126
+    ERROR       = 127
 
 ###
 # Parsers for keywords and delimiters.
@@ -273,7 +283,7 @@ wslanguage = WHITESPACE >> any_command << optional(seq_pt)
 @generate
 def wsscript():
     """
-    The traditional concept of the compound statement from C
+    The traditional concept of the compound statement
     """
     yield WHITESPACE
     statements = yield many(sepBy(any_command, seq_pt))
@@ -306,6 +316,7 @@ def make_tree(opcodes:tuple) -> SloppyTree:
     # and we are done.
     ###
     command = opcodes[0]
+    if not isinstance(command, Hashable): command=tuple(command)
     t[command]
     instructions = opcodes[1:]
     if not len(instructions): return t
@@ -321,48 +332,48 @@ def make_tree(opcodes:tuple) -> SloppyTree:
 
 
 @trap
-def parser_test(p:Parser, s:str) -> int:
+def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     """
     For testing. Pick a parser and a string and print the result or
     the error.
     """
-    print(f"Parsing >>{s}<<")
-    pprint(make_tree(p.parse(s)))
+    global parsertests
+    print(f"Running {len(parsertests)} tests.")
+    for k, v in parsertests:
+        this_parser = globals()[k]
+        print(f"Parsing >>{v}<< with {k}")
+        if use_resolver:
+            pprint(resolver.resolver(make_tree(this_parser.parse(v))))
+        else:
+            pprint(make_tree(this_parser.parse(v)))
+
     return os.EX_OK
 
 
 if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(prog="wscontrolparser", 
+        description="What wscontrolparser does, wscontrolparser does best.")
 
-    ###
-    # Keep these around just in case.
-    ###
+    parser.add_argument('-c', '--config', type=str, default="wscontrol.toml",
+        help="Name of the toml file for configuration. Defaults to wscontrol.toml")
 
-    #parser_test(wslanguage, 'stop')
-    #parser_test(wslanguage, '  stop   ')
-    #parser_test(wslanguage, '  stop')
-    #parser_test(hostname, "adam" )
-    #parser_test(hostname, "adam " )
-    #parser_test(hostnames, "(adam, anna)")
-    #parser_test(context, "(adam, anna, michael)")
-    #parser_test(context, "michael")
-    #parser_test(context, "(michael)")
+    parser.add_argument('-o', '--output', type=str, default="",
+        help="Output file name")
 
-    parser_test(send_command, "send /ab/c/d to (adam, anna, kevin)")
-    parser_test(send_command, "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)")
-    parser_test(exec_command, 'on parish_lab_workstations do "date -%s"')
-    parser_test(exec_command, 'on (billieholiday, badenpowell) do "date -%s"')
+    parser.add_argument('-r', '--resolve', action='store_true',
+        help="Invoke the resolver if this is set.")
 
-    parser_test(wslanguage, 'on (sarah, evan, kevin) do "cat /etc/fstab")')   
-    parser_test(wslanguage, 'on (sarah, evan, kevin) do capture "cat /etc/fstab")')   
-    parser_test(wslanguage, """
-        on (billieholiday, adam, thais) do (
-            capture "tail -1 /etc/fstab", 
-            "sed -i 's/141.166.88.99/newhost/' somefile" )
-            """)
+    myargs = parser.parse_args()
+    use_resolver = myargs.resolve
 
-    parser_test(wslanguage, """on adam do from x.sh""")
-    parser_test(wslanguage, """on adam do from local ~/X.sh""")
-    parser_test(wslanguage, """send ~/important.txt to all_workstations""")
+    config = wsconfig.WSConfig(myargs.config)
 
-    parser_test(wslanguage, """log "hello world" """)
-    parser_test(wslanguage, """stop""")
+    try:
+        outfile = sys.stdout if not myargs.output else open(myargs.output, 'w')
+        with contextlib.redirect_stdout(outfile):
+            sys.exit(globals()[f"{os.path.basename(__file__)[:-3]}_main"](myargs))
+
+    except Exception as e:
+        print(f"Escaped or re-raised exception: {e}")
+

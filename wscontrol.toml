@@ -39,13 +39,14 @@ ws.nas = [ 'truenas', 'newnas', 'trueuser' ]
 # config file. The SSH config file is robust and standard,
 # so its use is preferred.
 ###
-# Default timeout for network connections.
-###
-default_timeout = 4 
 
 ########################################################
-# Section 2: commands
+# Section 2: executables
 ########################################################
+
+exe.remote = "$(which ssh)"
+exe.copy = "$(which scp)"
+
 
 cmd.newuser = "useradd -m {} -u $(id {} 2>/dev/null) && usermod -aG users {}"
 

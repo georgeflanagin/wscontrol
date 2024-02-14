@@ -132,6 +132,14 @@ class WSConsole(cmd.Cmd):
 
 
     @trap
+    def do_samples(self, args:str="") -> None:
+        """
+        Show some samples.
+        """
+        return
+
+
+    @trap
     def do_whatis(self, args:str="") -> None:
         """
         Syntax: whatis {symbol}
@@ -139,7 +147,7 @@ class WSConsole(cmd.Cmd):
         Look up a symbolic name (example: the name of a host or 
         group of hosts), and show the user what it means.
         """ 
-        if not args: return self.do_help('explain')
+        if not args: return self.do_help('whatis')
 
         arg_list = args.split('.')
         t = WSConfig()
@@ -192,4 +200,5 @@ class WSConsole(cmd.Cmd):
         
         resolved_command = resolver(make_tree(tokens))
         logger.debug(f"{resolved_command=}")
-        fsm(resolved_command, not self.myargs.no_exec)
+        pprint(f"{resolved_command=}")
+        # fsm(resolved_command, not self.myargs.no_exec)

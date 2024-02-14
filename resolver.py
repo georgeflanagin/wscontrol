@@ -166,7 +166,11 @@ def resolver(t:SloppyTree) -> SloppyTree:
     returns -- The modified (resolved) parse tree.
 
     """
-    config = WSConfig()
+    try:
+        config = WSConfig()
+    except Exception as e:
+        print(f"Could not get configuration. {e}")
+        sys.exit(os.EX_CONFIG)
 
     cmd = next(iter(dict(t)))
     d = t[cmd]
