@@ -44,6 +44,9 @@ parsertests = (
     ("context",  "michael"),
     ("context",  "(michael)"),
 
+
+    ("wslanguage", "send kevin to kevin"),
+
     # one file to multiple hosts.
     ("send_command",  "send /ab/c/d to (adam, anna, kevin)"),
     # multiple files to multiple hosts.

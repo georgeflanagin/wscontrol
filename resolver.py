@@ -41,7 +41,7 @@ from   urlogger import URLogger, piddly
 ###
 # imports and objects that are a part of this project
 ###
-from   wscontrolparser import OpCode
+from   opcodes import OpCode
 from   wsconfig import WSConfig
 
 ###
@@ -96,7 +96,7 @@ def resolve_FILES(data:tuple) -> tuple:
     """
     files = data[0]
     if isinstance(files, str): files = (files,)
-    return tuple(fileutils.expandall(_) for _ in files)
+    return tuple((OpCode.FILE, fileutils.expandall(_)) for _ in files)
 
 
 @trap
@@ -140,7 +140,7 @@ def resolve_ON(data:tuple) -> tuple:
             if hostinfo is None:
                 print(f"No connection information for {host}.")
                 sys.exit(os.EX_CONFIG)
-            connection_info.append(hostinfo)   
+            connection_info.append((OpCode.HOST, hostinfo))
     
     return connection_info
 

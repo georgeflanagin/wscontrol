@@ -128,6 +128,21 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
 hostname = lexeme(regex('[A-Za-z_.]+'))
 filename = lexeme(regex('[-A-Za-z/.*_$~]+'))
 
+#@lexeme
+#@generate
+#def hostname():
+#    yield WHITESPACE
+#    name = yield lexeme(regex('[A-Za-z_.]+'))
+#    raise EndOfGenerator((OpCode.HOST, name))
+#
+#
+#@lexeme
+#@generate
+#def filename():
+#    yield WHITESPACE
+#    name = lexeme(regex('[-A-Za-z/.*_$~]+'))
+#    raise EndOfGenerator((OpCode.FILE, name))
+
 @lexeme
 @generate
 def filenames():
