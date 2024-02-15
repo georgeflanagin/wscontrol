@@ -17,7 +17,7 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 import argparse
-from   collections.abc import Iterable
+from   collections.abc import Iterable, Hashable
 import contextlib
 from   enum import IntEnum
 from   pprint import pprint
@@ -226,8 +226,8 @@ def send_command():
     yield lexeme(string('to'))
     destination = yield context
     destination = (OpCode.TO, destination)
-    action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
-    raise EndOfGenerator((OpCode.SEND, fname, destination, action))
+    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
+    raise EndOfGenerator((OpCode.SEND, fname, destination, error_action))
 
 
 @lexeme
@@ -310,6 +310,22 @@ def make_tree(opcodes:tuple) -> SloppyTree:
 
 
 @trap
+def squash_tuple(t:tuple) -> tuple:
+    """
+    Function to replace one-tuple values with the tuple element.
+    """
+    if not isinstance(t, tuple): return t
+
+    new_t = []
+    for _ in t:
+        if isinstance(_, tuple) and len(_) == 1:
+            new_t.append(_[0])
+        else:
+            new_t.append(_)
+
+    return tuple(new_t)
+
+@trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     """
     For testing. Pick a parser and a string and print the result or
@@ -319,7 +335,7 @@ def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     print(f"Running {len(parsertests)} tests.")
     for k, v in parsertests:
         this_parser = globals()[k]
-        print(f"Parsing >>{v}<< with {k}")
+        print(f"\nParsing >>{v}<< with {k}\n")
         if use_resolver:
             pprint(resolver.resolver(make_tree(this_parser.parse(v))))
         else:

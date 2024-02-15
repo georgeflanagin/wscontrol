@@ -97,7 +97,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     try:
         commit=linuxutils.version(False)
         d = str(datetime.fromtimestamp(os.stat(__file__).st_mtime))[:19]
-        console.cmdloop(intro=f"Welcome to WSControl. Commit ID {commit}. Revised {d}")
+        console.cmdloop(intro=f"  Welcome to WSControl. Commit ID {commit}. Revised {d}")
     except KeyboardInterrupt as e:
         print("You pressed control-C")
         logger.info("Leaving via control-C")

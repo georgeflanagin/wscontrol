@@ -78,6 +78,13 @@ def resolve_config(search_term:str, not_found:object) -> object:
 
 
 @trap
+def resolve_DO(data:tuple) -> tuple:
+    if OpCode.FROM in data[0]:
+        return resolve_FROM(data)
+    return tuple((OpCode.ACTION, _) for _ in data[0])
+
+    
+@trap
 def resolve_FILES(data:tuple) -> tuple:
     """
     FILES come in looking like these examples:
@@ -106,6 +113,7 @@ def resolve_FROM(data:tuple) -> tuple:
     file do we try to resolve the file name.
     """
     clause = data[0]
+    print(clause)
     if clause[1] is not OpCode.LOCAL: return clause
 
     try:
@@ -120,18 +128,11 @@ def resolve_FROM(data:tuple) -> tuple:
         print(f"{command_file} is empty. Nothing to do.")
         return clause[0], clause[1], OpCode.NOP
 
-    commands = tuple((OpCode.ACTION, _.strip()) for _ in commands)
+    commands = tuple((OpCode.ACTION, _.strip()) for _ in commands if _)
     
     return clause[0], clause[1], commands
 
 
-@trap
-def resolve_DO(data:tuple) -> tuple:
-    if OpCode.FROM.name in data[0]:
-        return resolve_FROM(data)
-    return data[0]
-
-    
 @trap
 def resolve_ON(data:tuple) -> tuple:
     """

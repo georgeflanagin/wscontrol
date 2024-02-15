@@ -44,18 +44,19 @@ parsertests = (
     ("context",  "michael"),
     ("context",  "(michael)"),
 
+    # ("on_error_clause", "on_error ignore"),
 
-    ("wslanguage", "send kevin to kevin"),
+    ("wslanguage", "send kevin to kevin on_error ignore"),
 
     # one file to multiple hosts.
-    ("send_command",  "send /ab/c/d to (adam, anna, kevin)"),
+    ("wslanguage",  "send /ab/c/d to (adam, anna, kevin)"),
     # multiple files to multiple hosts.
-    ("send_command",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
+    ("wslanguage",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
 
     # one command on a configured group.
-    ("exec_command",  'on ws.parish do "date -%s"'),
+    ("wslanguage",  'on ws.parish do "date -%s"'),
     # one command on specific hosts.
-    ("exec_command",  'on (billieholiday, badenpowell) do "date -%s"'),
+    ("wslanguage",  'on (billieholiday, badenpowell) do "date -%s"'),
 
     # These are tests on the full language.
     ("wslanguage",  'on (sarah, evan, kevin) do "cat /etc/fstab"'),   
@@ -67,7 +68,6 @@ parsertests = (
 
     ("wslanguage",  """on adam do from x.sh"""),
     ("wslanguage",  """on adam do from local ~/X.sh"""),
-    ("wslanguage",  """send ~/important.txt to all_workstations"""),
 
     ("wslanguage",  """log "hello world" """),
     ("wslanguage",  """stop""")

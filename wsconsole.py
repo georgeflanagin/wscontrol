@@ -80,7 +80,7 @@ class WSConsole(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.myargs = myargs
         self.most_recent_cmd = ""
-        self.prompt = "\n[WSControl]: "
+        self.prompt = "\n [WSControl]: "
 
 
     @trap
