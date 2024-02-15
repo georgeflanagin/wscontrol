@@ -53,7 +53,7 @@ parsertests = (
     ("send_command",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
 
     # one command on a configured group.
-    ("exec_command",  'on parish_lab_workstations do "date -%s"'),
+    ("exec_command",  'on ws.parish do "date -%s"'),
     # one command on specific hosts.
     ("exec_command",  'on (billieholiday, badenpowell) do "date -%s"'),
 

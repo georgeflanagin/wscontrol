@@ -106,10 +106,23 @@ def resolve_FROM(data:tuple) -> tuple:
     file do we try to resolve the file name.
     """
     clause = data[0]
-    if clause[1] is OpCode.LOCAL:
-        return clause[0], clause[1], fileutils.expandall(clause[2])
-    else:
-        return clause
+    if clause[1] is not OpCode.LOCAL: return clause
+
+    try:
+        command_file = fileutils.expandall(clause[2])
+        with open(command_file) as f:
+            commands = f.readlines()
+    except:
+        print(f"Unable to open {command_file}")
+        sys.exit(os.EX_IOERR)
+
+    if not len(commands): 
+        print(f"{command_file} is empty. Nothing to do.")
+        return clause[0], clause[1], OpCode.NOP
+
+    commands = tuple((OpCode.ACTION, _.strip()) for _ in commands)
+    
+    return clause[0], clause[1], commands
 
 
 @trap
