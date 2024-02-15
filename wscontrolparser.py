@@ -39,8 +39,9 @@ from   urdecorators import trap
 ###
 # imports and objects that are a part of this project
 ###
+from   parsertests import parsertests
+from   opcodes import OpCode
 import resolver
-from parsertests import parsertests
 import wsconfig
 
 ###
@@ -59,44 +60,6 @@ __maintainer__ = 'George Flanagin'
 __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
-
-
-class OpCode(IntEnum):
-    OK          = 0
-
-    # Actions to take if there are problems.
-    IGNORE      = 8
-    FAIL        = 9
-    NEXT        = 10
-    RETRY       = 11
-
-    # Instructions to "do something" or "identify something"
-    CAPTURE     = 16
-    FROM        = 17
-    DO          = 18
-    ON          = 19
-    SEND        = 20
-    ONERROR     = 21
-    EXEC        = 22
-    TO          = 23
-    LOCAL       = 24
-    REMOTE      = 25
-    FILES       = 26
-    LITERAL     = 27
-    
-
-    # Typing info for data
-    HOST        = 64
-    FILE        = 65
-    ACTION      = 66
-    
-    # Atomic instructions that can appear anywhere. The
-    # NOP instruction can replace any of the others, effectively
-    # commenting out a portion of the code.
-    LOG         = 124
-    STOP        = 125
-    NOP         = 126
-    ERROR       = 127
 
 ###
 # Parsers for keywords and delimiters.
