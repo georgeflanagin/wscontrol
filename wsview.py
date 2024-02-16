@@ -379,7 +379,7 @@ if __name__ == '__main__':
    
     # add a check for --ws argument validity and suggest valid entry
     if get_list_of_ws(myargs.ws) is None:
-        with open(myargs.input, "r") as f:
+        with open(myargs.input, "rb") as f:
             contents = tomllib.load(f)
             for k, v in contents.items():
                 if k == "ws":
