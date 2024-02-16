@@ -197,13 +197,24 @@ def on_error_clause():
     error_action = yield action
     raise EndOfGenerator((OpCode.ONERROR, error_action))
 
+@lexeme
+@generate
+def snapshot_command():
+    """
+    Example: 
+    """
+    yield WHITESPACE
+    yield snapshot 
+    location = yield context
+    location = ((OpCode.ON, location))
+    raise EndOfGenerator((OpCode.SNAPSHOT, location))
 
 @lexeme
 @generate
 def do_clause():
     yield WHITESPACE
     yield do
-    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op
+    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op 
     if isinstance(action, str): action = (action,)
     raise EndOfGenerator((OpCode.DO, action))
 
@@ -276,7 +287,7 @@ stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme
 # come afterwards.
 ###
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
-    optional(stop_command ^ log_command ^ send_command ^ exec_command)
+    optional(stop_command ^ log_command ^ send_command ^ exec_command ^ snapshot_command)
 
 any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command ^ snapshot_command
 wslanguage = WHITESPACE >> any_command << optional(seq_pt)
