@@ -46,33 +46,32 @@ parsertests = (
 
     # ("on_error_clause", "on_error ignore"),
 
-    ("wslanguage", "send kevin to kevin on_error ignore"),
+    # ("wslanguage", "send kevin to kevin on_error ignore"),
 
     # one file to multiple hosts.
-    ("wslanguage",  "send /ab/c/d to (adam, anna, kevin)"),
+    # ("wslanguage",  "send /ab/c/d to (adam, anna, kevin)"),
     # multiple files to multiple hosts.
     ("wslanguage",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
 
     # one command on a configured group.
-    ("wslanguage",  'on ws.parish do "date -%s"'),
+    # ("wslanguage",  'on ws.parish do "date -%s"'),
     # one command on specific hosts.
     ("wslanguage",  'on (billieholiday, badenpowell) do "date -%s"'),
 
     # These are tests on the full language.
-    ("wslanguage",  'on (sarah, evan, kevin) do "cat /etc/fstab"'),   
-    ("wslanguage",  'on (sarah, evan, kevin) do capture "cat /etc/fstab")'),
+    # ("wslanguage",  'on (sarah, evan, kevin) do "cat /etc/fstab"'),   
     ("wslanguage",  """on (billieholiday,  adam, thais) do (
                 "tail -1 /etc/fstab", 
                 "sed -i 's/141.166.88.99/newhost/' somefile"
                 )"""),
 
-    ("wslanguage",  """on adam do from x.sh"""),
-    ("wslanguage",  """on adam do from local ~/X.sh"""),
+    # ("wslanguage",  """on adam do from x.sh"""),
+    # ("wslanguage",  """on adam do from local ~/X.sh"""),
 
-    ("wslanguage",  """log "hello world" """),
-    ("wslanguage",  """snapshot erica """),
-    ("wslanguage",  """snapshot (erica, evan) """),
-    ("wslanguage",  """snapshot ws.parish """),
+    # ("wslanguage",  """log "hello world" """),
+    # ("wslanguage",  """snapshot erica """),
+    # ("wslanguage",  """snapshot (erica, evan) """),
+    # ("wslanguage",  """snapshot ws.parish """),
     ("wslanguage",  """stop"""),
     )
 

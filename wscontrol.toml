@@ -26,12 +26,6 @@ ws.all = [
     'enterprise'
     ]
 
-ws.linux7 = [ 'cooper', 'thais', 'anna' ]
-ws.linux8 = [ 
-    'adam', 'alexis', 'boyi', 'camryn', 'erica',
-    'evan', 'irene', 'justin', 'kevin', 'michael',
-    'sarah', 'enterprise' ]
-
 ws.nas = [ 'truenas', 'newnas', 'trueuser' ]
 
 ###
@@ -49,4 +43,5 @@ exe.copy = "$(which scp)"
 
 
 cmd.newuser = "useradd -m {} -u $(id {} 2>/dev/null) && usermod -aG users {}"
+cmd.gpuinfo = "nvidia-smi --query-gpu=memory.total,memory.used,power.draw,fan.speed  --format=csv,noheader"
 

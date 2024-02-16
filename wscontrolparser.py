@@ -114,7 +114,7 @@ def filenames():
     yield lparen
     fnames = yield sepBy(filename, comma)
     yield rparen
-    raise EndOfGenerator(fnames)
+    raise EndOfGenerator(tuple(fnames))
 
 
 @lexeme
@@ -127,7 +127,7 @@ def hostnames():
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
-    raise EndOfGenerator(elements)
+    raise EndOfGenerator(tuple(elements))
 
 context = hostnames ^ hostname
 
@@ -145,7 +145,15 @@ def capture_op():
     cmd = yield op
     raise EndOfGenerator((OpCode.CAPTURE, cmd))
 
-any_op = capture_op ^ op
+@lexeme
+@generate
+def any_op():
+    """
+    return a tagged action.
+    """
+    this_op = yield capture_op ^ op
+    raise EndOfGenerator((OpCode.ACTION, this_op))    
+
 
 @lexeme
 @generate 
@@ -157,8 +165,9 @@ def op_sequence():
     yield WHITESPACE
     yield lparen
     ops = yield sepBy(any_op, comma)
+    ops = tuple(ops)
     yield rparen
-    raise EndOfGenerator(tuple(ops))
+    raise EndOfGenerator(ops)
 
 
 @lexeme

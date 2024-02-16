@@ -76,11 +76,21 @@ def resolve_config(search_term:str, not_found:object) -> object:
         
     return d
 
+@trap
+def resolve_ACTION(data) -> object:
+    """
+    See if an action is defined in the .toml file.
+    """
+    d = WSConfig()
+    
+
 
 @trap
 def resolve_DO(data:tuple) -> tuple:
     if OpCode.FROM in data[0]:
         return resolve_FROM(data)
+    elif OpCode.ACTION in data[0]:
+        return resolve_ACTION(data)
     return tuple((OpCode.ACTION, _) for _ in data[0])
 
     
@@ -99,7 +109,6 @@ def resolve_FILES(data:tuple) -> tuple:
     returns an empty list. [2] Most of the programs like rsync and
     scp that might be used to move files between hosts deal well with
     wildcard file names.
-
     """
     files = data[0]
     if isinstance(files, str): files = (files,)
@@ -191,6 +200,7 @@ def resolver(t:SloppyTree) -> SloppyTree:
 
     for k in d.keys():
         if k in OpCode:
+            print(f"Found {k}")
             try:
                 d[k] = globals()[f"resolve_{k.name}"](d[k])
             except:
