@@ -29,7 +29,7 @@ import re
 import shutil
 import sqlite3
 import time
-import toml
+import tomllib
 import math
 mynetid = getpass.getuser()
 
@@ -109,8 +109,8 @@ def get_list_of_ws(lst:str):
     """
     Return list of workstations based on who they belong to.
     """
-    with open(myargs.input, "r") as f:
-        contents = toml.load(f)
+    with open(myargs.input, "rb") as f:
+        contents = tomllib.load(f)
     try:
         result = contents["ws"][lst]
     except:
@@ -380,7 +380,7 @@ if __name__ == '__main__':
     # add a check for --ws argument validity and suggest valid entry
     if get_list_of_ws(myargs.ws) is None:
         with open(myargs.input, "r") as f:
-            contents = toml.load(f)
+            contents = tomllib.load(f)
             for k, v in contents.items():
                 if k == "ws":
                     suggested_lst = v.keys()
