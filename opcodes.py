@@ -37,6 +37,7 @@ class OpCode(IntEnum):
     REMOTE      = 25
     FILES       = 26
     LITERAL     = 27
+    SNAPSHOT    = 28
     
 
     # Typing info for data

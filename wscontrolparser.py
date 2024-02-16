@@ -73,6 +73,7 @@ on      = lexeme(string('on'))
 rparen  = lexeme(string(RPAREN))
 send    = lexeme(string('send'))
 to      = lexeme(string('to'))
+snapshot = lexeme(string('snapshot'))
 
 seq_pt  = lexeme(string(SEMICOLON))
 
@@ -232,6 +233,20 @@ def send_command():
 
 @lexeme
 @generate
+def snapshot_command():
+    """
+    snapshot adam
+    snapshot ws.parish
+    """
+    yield WHITESPACE
+    yield snapshot
+    target = yield context
+    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.RETRY))
+    raise EndOfGenerator((OpCode.SNAPSHOT, (OpCode.ON, target), error_action))
+
+
+@lexeme
+@generate
 def log_command():
     """
     Log a message.
@@ -254,7 +269,7 @@ stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
     optional(stop_command ^ log_command ^ send_command ^ exec_command)
 
-any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
+any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command ^ snapshot_command
 wslanguage = WHITESPACE >> any_command << optional(seq_pt)
 
 @lexeme

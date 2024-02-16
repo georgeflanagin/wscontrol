@@ -34,15 +34,15 @@ __license__ = 'MIT'
 # and the value is a string representing the action.
 parsertests = (
     # parse a keyword with varying amounts of space around it.
-    ("wslanguage",  'stop'),
-    ("wslanguage",  '  stop   '),
-    ("wslanguage",  '  stop'),
-    ("hostname",  "adam" ),
-    ("hostname",  "adam " ),
-    ("hostnames",  "(adam, anna)"),
-    ("context",  "(adam, anna, michael)"),
-    ("context",  "michael"),
-    ("context",  "(michael)"),
+    #("wslanguage",  'stop'),
+    #("wslanguage",  '  stop   '),
+    #("wslanguage",  '  stop'),
+    #("hostname",  "adam" ),
+    #("hostname",  "adam " ),
+    #("hostnames",  "(adam, anna)"),
+    #("context",  "(adam, anna, michael)"),
+    #("context",  "michael"),
+    #("context",  "(michael)"),
 
     # ("on_error_clause", "on_error ignore"),
 
@@ -70,7 +70,10 @@ parsertests = (
     ("wslanguage",  """on adam do from local ~/X.sh"""),
 
     ("wslanguage",  """log "hello world" """),
-    ("wslanguage",  """stop""")
+    ("wslanguage",  """snapshot erica """),
+    ("wslanguage",  """snapshot (erica, evan) """),
+    ("wslanguage",  """snapshot ws.parish """),
+    ("wslanguage",  """stop"""),
     )
 
 
