@@ -61,7 +61,7 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-info = netutils.get_ssh_host_info('all')
+host_info = netutils.get_ssh_host_info('all')
 logger = logging.getLogger('URLogger')
 
 @trap
@@ -75,28 +75,31 @@ def resolve_config(search_term:str, not_found:object) -> object:
         if d is None: return not_found
         
     return d
+    
 
 @trap
-def resolve_ACTION(data) -> object:
+def resolve_CONTEXT(data:list)
     """
-    See if an action is defined in the .toml file.
+    Make sense of host names.
     """
     d = WSConfig()
-    
-    
+    newlist = []
+    for datum in data:
+        host = datum[OpCode.HOST]
+        host = resolve_config(host, host)
+        hosts = host if isinstance(host, list) else [host]
+        for host in hosts:
+            hostinfo = info.get(host)
+            if hostinfo is None:
+                print(f"No connection info for {host}")
+                continue
+            newlist.append({OpCode.HOST : hostinfo})
 
+    return newlist
 
+    
 @trap
-def resolve_DO(data:tuple) -> tuple:
-    if OpCode.FROM in data[0]:
-        return resolve_FROM(data)
-    elif OpCode.ACTION in data[0]:
-        return resolve_ACTION(data)
-    return tuple((OpCode.ACTION, _) for _ in data[0])
-
-    
-@trap
-def resolve_FILES(data:tuple) -> tuple:
+def resolve_FILES(data:list) -> list:
     """
     FILES come in looking like these examples:
 
@@ -111,9 +114,13 @@ def resolve_FILES(data:tuple) -> tuple:
     scp that might be used to move files between hosts deal well with
     wildcard file names.
     """
-    files = data[0]
-    if isinstance(files, str): files = (files,)
-    return tuple((OpCode.FILE, fileutils.expandall(_)) for _ in files)
+    for i, datum in enumerate(data):
+        data[i] = {datum[OpCode.FILE] : fileutils.expandall(datum[OpCode.FILE])}
+    return data
+
+
+def resolve_REMOTE(o:object) -> object:
+    return o
 
 
 @trap
@@ -144,34 +151,6 @@ def resolve_FROM(data:tuple) -> tuple:
 
 
 @trap
-def resolve_ON(data:tuple) -> tuple:
-    """
-    hostnames come in looking like this:
-
-    (['adam', 'anna', 'kevin'],)
-    ('adam',)
-    """
-    global info
-    data = data[0]
-    
-    if isinstance (data, str): data = (data,)
-
-    connection_info = []
-    for datum in data:
-        hosts = resolve_config(datum, (datum,))
-        for host in hosts:
-            hostinfo = info.get(host)
-            if hostinfo is None:
-                print(f"No connection information for {host}.")
-                sys.exit(os.EX_CONFIG)
-            connection_info.append((OpCode.HOST, hostinfo))
-    
-    return connection_info
-
-resolve_TO = resolve_ON
-
-
-@trap
 def resolver(t:SloppyTree) -> SloppyTree:
     """
     This function works its way through the tree of symbols looking for
@@ -190,26 +169,17 @@ def resolver(t:SloppyTree) -> SloppyTree:
     returns -- The modified (resolved) parse tree.
 
     """
-    try:
-        config = WSConfig()
-    except Exception as e:
-        print(f"Could not get configuration. {e}")
-        sys.exit(os.EX_CONFIG)
-
     cmd = next(iter(dict(t)))
     d = t[cmd]
 
     for k in d.keys():
         if k in OpCode:
-            print(f"Found {k}")
             try:
                 d[k] = globals()[f"resolve_{k.name}"](d[k])
             except:
-                pass
-
+                d[k] = resolver(d[k])
         else:
-            logger.info(f"{k=} not in OpCode")
-            pass # someday, we may have something else here.
+            print(f"Found non-OpCode key {k}")
         
     t[cmd] = d
     return t
