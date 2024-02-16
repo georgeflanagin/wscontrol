@@ -252,7 +252,7 @@ def snapshot_command():
     yield snapshot
     target = yield context
     error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.RETRY})
-    raise EndOfGenerator({OpCode.SNAPSHOT : {{OpCode.ON: target}, {error_action}}})
+    raise EndOfGenerator({OpCode.SNAPSHOT : [{OpCode.ON: target}, error_action]})
 
 
 @lexeme
@@ -295,82 +295,6 @@ def wsscript():
 
 
 @trap
-def make_tree(opcodes:tuple) -> SloppyTree:
-    """
-    Run down the opcodes, and build a tree so that we can use the 
-    usual tree functions to find things. The general format of a
-    successfully parsed input is 
-        - an opcode 
-        - optionally followed by tuples
-        - each interior tuple is an opcode and an operand
-        - the operand may be a single or an iterable.
-    """
-    return opcodes
-    
-    ###
-    # Make sure the argument is a tuple, even if it is a one-tuple.
-    ###
-    if not isinstance(opcodes, tuple):
-        opcodes = (opcodes,)
-
-    t = SloppyTree()
-
-    ###
-    # If we get an atomic opcode, create a tree that only has a root,
-    # and we are done.
-    ###
-    command = opcodes[0]
-    if not isinstance(command, Hashable): command=tuple(command)
-    t[command]
-    instructions = opcodes[1:]
-    if not len(instructions): return t
-
-    for action in instructions:
-        opcode = action[0]
-        if not isinstance(opcode, OpCode):
-            raise Exception(f"Found {action}. Excepted a tuple or an OpCode")
-        operands = action[1:]
-        t[command][opcode] = operands
-
-    return t
-
-
-@trap
-def squash_tuple(t:tuple) -> tuple:
-    """
-    Function to replace one-tuple values with the tuple element.
-    """
-    if not isinstance(t, tuple): return t
-
-    new_t = []
-    for _ in t:
-        if isinstance(_, tuple) and len(_) == 1:
-            new_t.append(_[0])
-        else:
-            new_t.append(_)
-
-    return tuple(new_t)
-
-
-@trap
-def tuple_to_tree(tup:tuple) -> SloppyTree:
-    """Recursively convert a nested tuple to a nested dictionary."""
-    # Base case: if the input is not a tuple, return it directly
-    if not isinstance(tup, tuple):
-        return tup
-    
-    # If the tuple contains two elements and the first element is not a tuple,
-    # it's a key-value pair to convert directly into a dictionary item
-    if len(tup) == 2 and not isinstance(tup[0], tuple):
-        return {tup[0]: tuple_to_dict(tup[1])}
-    
-    # Otherwise, recursively convert each item in the tuple into a dictionary
-    return SloppyTree({k: tuple_to_dict(v) for k, v in tup})
-
-
-
-
-@trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     """
     For testing. Pick a parser and a string and print the result or
@@ -382,9 +306,9 @@ def wscontrolparser_main(myargs:argparse.Namespace) -> int:
         this_parser = globals()[k]
         print(f"\nParsing >>{v}<< with {k}\n")
         if use_resolver:
-            pprint(resolver.resolver(tuple_to_tree(this_parser.parse(v))))
+            pprint(resolver.resolver(this_parser.parse(v)))
         else:
-            pprint(tuple_to_tree(this_parser.parse(v)))
+            pprint(this_parser.parse(v))
 
     return os.EX_OK
 

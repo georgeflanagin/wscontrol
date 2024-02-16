@@ -65,13 +65,13 @@ parsertests = (
                 "sed -i 's/141.166.88.99/newhost/' somefile"
                 )"""),
 
-    # ("wslanguage",  """on adam do from x.sh"""),
-    # ("wslanguage",  """on adam do from local ~/X.sh"""),
+    ("wslanguage",  """on adam do from x.sh"""),
+    ("wslanguage",  """on adam do from local ~/X.sh"""),
 
-    # ("wslanguage",  """log "hello world" """),
-    # ("wslanguage",  """snapshot erica """),
-    # ("wslanguage",  """snapshot (erica, evan) """),
-    # ("wslanguage",  """snapshot ws.parish """),
+    ("wslanguage",  """log "hello world" """),
+    ("wslanguage",  """snapshot erica """),
+    ("wslanguage",  """snapshot (erica, evan) """),
+    ("wslanguage",  """snapshot ws.parish """),
     ("wslanguage",  """stop"""),
     )
 
