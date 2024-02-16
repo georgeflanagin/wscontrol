@@ -79,7 +79,7 @@ class OpCode(IntEnum):
     REMOTE      = 25
     FILES       = 26
     LITERAL     = 27
-    
+    SNAPSHOT    = 28 
 
     # Atomic instructions that can appear anywhere. The
     # NOP instruction can replace any of the others, effectively
@@ -100,6 +100,7 @@ on      = lexeme(string('on'))
 rparen  = lexeme(string(RPAREN))
 send    = lexeme(string('send'))
 to      = lexeme(string('to'))
+snapshot = lexeme(string('snapshot'))
 
 seq_pt  = lexeme(string(SEMICOLON))
 
@@ -199,13 +200,24 @@ def on_error_clause():
     error_action = yield action
     raise EndOfGenerator((OpCode.ONERROR, error_action))
 
+@lexeme
+@generate
+def snapshot_command():
+    """
+    Example: 
+    """
+    yield WHITESPACE
+    yield snapshot 
+    location = yield context
+    location = ((OpCode.ON, location))
+    raise EndOfGenerator((OpCode.SNAPSHOT, location))
 
 @lexeme
 @generate
 def do_clause():
     yield WHITESPACE
     yield do
-    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op
+    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op 
     if isinstance(action, str): action = (action,)
     raise EndOfGenerator((OpCode.DO, action))
 
@@ -264,9 +276,9 @@ stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme
 # come afterwards.
 ###
 nop_command  = WHITESPACE >> lexeme(string('nop')).result(OpCode.NOP) + \
-    optional(stop_command ^ log_command ^ send_command ^ exec_command)
+    optional(stop_command ^ log_command ^ send_command ^ exec_command ^ snapshot_command)
 
-any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command
+any_command = nop_command ^ stop_command ^ log_command ^ send_command ^ exec_command ^ snapshot_command
 wslanguage = WHITESPACE >> any_command << optional(seq_pt)
 
 @lexeme
@@ -366,3 +378,5 @@ if __name__ == '__main__':
 
     parser_test(wslanguage, """log "hello world" """)
     parser_test(wslanguage, """stop""")
+    parser_test(wslanguage, """snapshot parish""")
+    parser_test(wslanguage, """snapshot all""")

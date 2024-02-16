@@ -43,7 +43,7 @@ from   urdecorators import trap
 # imports and objects that are a part of this project
 ###
 from wscontrolparser import OpCode
-
+from wsview import * #utility for a snapshot
 ###
 # Global objects and initializations
 ###
@@ -137,6 +137,14 @@ def fsm_do_EXEC(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
 
     return num_actions
 
+@trap
+def fsm_do_SNAPSHOT(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
+    """
+    Snapshot is a program that displays CPU and memory availability using curses.
+    """
+    ws = "" #retrieve this from prog:SloppyTree
+    fork_ssh(ws)
+    wrapper(display_data)
 
 @trap
 def fsm_do_SEND(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
