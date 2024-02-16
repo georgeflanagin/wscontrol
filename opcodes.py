@@ -45,6 +45,7 @@ class OpCode(IntEnum):
     FILE        = 65
     ACTION      = 66
     CONTEXT     = 67
+    ACTIONS     = 68
     
     # Atomic instructions that can appear anywhere. The
     # NOP instruction can replace any of the others, effectively

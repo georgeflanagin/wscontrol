@@ -92,20 +92,20 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
 hostname = lexeme(regex('[A-Za-z_.]+'))
 filename = lexeme(regex('[-A-Za-z/.*_$~]+'))
 
-#@lexeme
-#@generate
-#def hostname():
-#    yield WHITESPACE
-#    name = yield lexeme(regex('[A-Za-z_.]+'))
-#    raise EndOfGenerator((OpCode.HOST, name))
-#
-#
-#@lexeme
-#@generate
-#def filename():
-#    yield WHITESPACE
-#    name = lexeme(regex('[-A-Za-z/.*_$~]+'))
-#    raise EndOfGenerator((OpCode.FILE, name))
+@lexeme
+@generate
+def hostname():
+    yield WHITESPACE
+    name = yield lexeme(regex('[A-Za-z_.]+'))
+    raise EndOfGenerator({OpCode.HOST: name})
+
+
+@lexeme
+@generate
+def filename():
+    yield WHITESPACE
+    name = yield lexeme(regex('[-A-Za-z/.*_$~]+'))
+    raise EndOfGenerator({OpCode.FILE: name})
 
 @lexeme
 @generate
@@ -114,7 +114,7 @@ def filenames():
     yield lparen
     fnames = yield sepBy(filename, comma)
     yield rparen
-    raise EndOfGenerator(tuple(fnames))
+    raise EndOfGenerator({OpCode.FILES: fnames})
 
 
 @lexeme
@@ -127,23 +127,11 @@ def hostnames():
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
-    raise EndOfGenerator(tuple(elements))
+    raise EndOfGenerator({OpCode.CONTEXT: elements})
 
 context = hostnames ^ hostname
 
 op = quoted
-capture = lexeme(string('capture'))
-
-@lexeme
-@generate
-def capture_op():
-    """
-    Example: capture "an_action"
-    """
-    yield WHITESPACE
-    yield capture
-    cmd = yield op
-    raise EndOfGenerator((OpCode.CAPTURE, cmd))
 
 @lexeme
 @generate
@@ -151,23 +139,22 @@ def any_op():
     """
     return a tagged action.
     """
-    this_op = yield capture_op ^ op
-    raise EndOfGenerator((OpCode.ACTION, this_op))    
+    this_op = yield op
+    raise EndOfGenerator({OpCode.ACTION: this_op})    
 
 
 @lexeme
 @generate 
 def op_sequence():
     """
-    Example: (capture "tail -1 /etc/fstab", 
+    Example: ("tail -1 /etc/fstab", 
         "sed -i 's/141.166.88.99/newhost/' somefile")
     """
     yield WHITESPACE
     yield lparen
     ops = yield sepBy(any_op, comma)
-    ops = tuple(ops)
     yield rparen
-    raise EndOfGenerator(ops)
+    raise EndOfGenerator({OpCode.ACTIONS: ops})
 
 
 @lexeme
@@ -181,9 +168,9 @@ def from_file_clause():
     yield lexeme(string('from'))
     local_scope = yield optional(local)
     fname = yield filename
-    raise EndOfGenerator((OpCode.FROM, 
-        OpCode.LOCAL if local_scope else OpCode.REMOTE,
-        fname))
+    raise EndOfGenerator({OpCode.FROM : {
+        OpCode.LOCAL if local_scope else OpCode.REMOTE :
+        fname}})
 
 
 @lexeme
@@ -195,7 +182,8 @@ def on_error_clause():
     yield WHITESPACE
     yield lexeme(string('on_error'))
     error_action = yield action
-    raise EndOfGenerator((OpCode.ONERROR, error_action))
+    raise EndOfGenerator({OpCode.ONERROR : error_action})
+
 
 @lexeme
 @generate
@@ -206,17 +194,17 @@ def snapshot_command():
     yield WHITESPACE
     yield snapshot 
     location = yield context
-    location = ((OpCode.ON, location))
-    raise EndOfGenerator((OpCode.SNAPSHOT, location))
+    location = {OpCode.ON : location}
+    raise EndOfGenerator({OpCode.SNAPSHOT : location})
+
 
 @lexeme
 @generate
 def do_clause():
     yield WHITESPACE
     yield do
-    action = yield from_file_clause ^ capture_op ^ op_sequence ^ op 
-    if isinstance(action, str): action = (action,)
-    raise EndOfGenerator((OpCode.DO, action))
+    action = yield from_file_clause ^ op_sequence ^ op 
+    raise EndOfGenerator({OpCode.DO : action})
 
     
 @lexeme
@@ -228,10 +216,10 @@ def exec_command():
     yield WHITESPACE
     yield on
     location = yield context
-    location = ((OpCode.ON, location))
+    location = {OpCode.ON: location}
     action = yield do_clause
-    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
-    raise EndOfGenerator((OpCode.EXEC, location, action, error_action))
+    error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.FAIL})
+    raise EndOfGenerator({OpCode.EXEC : [location, action, error_action]})
 
 
 @lexeme
@@ -242,13 +230,15 @@ def send_command():
     """
     yield WHITESPACE
     yield lexeme(string('send'))
+    print("send")
     fname = yield filenames ^ filename
-    fname = (OpCode.FILES, fname)
+    fname = {OpCode.FILES: fname}
+    print(fname)
     yield lexeme(string('to'))
     destination = yield context
-    destination = (OpCode.TO, destination)
-    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.FAIL))
-    raise EndOfGenerator((OpCode.SEND, fname, destination, error_action))
+    destination = {OpCode.TO : destination}
+    error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.FAIL})
+    raise EndOfGenerator({OpCode.SEND : [fname, destination, error_action]})
 
 
 @lexeme
@@ -261,8 +251,8 @@ def snapshot_command():
     yield WHITESPACE
     yield snapshot
     target = yield context
-    error_action = yield optional(on_error_clause, (OpCode.ONERROR, OpCode.RETRY))
-    raise EndOfGenerator((OpCode.SNAPSHOT, (OpCode.ON, target), error_action))
+    error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.RETRY})
+    raise EndOfGenerator({OpCode.SNAPSHOT : {{OpCode.ON: target}, {error_action}}})
 
 
 @lexeme
@@ -274,7 +264,7 @@ def log_command():
     yield WHITESPACE
     yield lexeme(string('log'))
     text = yield quoted ^ everything
-    raise EndOfGenerator((OpCode.LOG, (OpCode.LITERAL, text)))
+    raise EndOfGenerator({OpCode.LOG : {OpCode.LITERAL: text}})
 
 ###
 # the STOP command is just "stop" or "quit"
@@ -315,6 +305,7 @@ def make_tree(opcodes:tuple) -> SloppyTree:
         - each interior tuple is an opcode and an operand
         - the operand may be a single or an iterable.
     """
+    return opcodes
     
     ###
     # Make sure the argument is a tuple, even if it is a one-tuple.
@@ -360,6 +351,25 @@ def squash_tuple(t:tuple) -> tuple:
 
     return tuple(new_t)
 
+
+@trap
+def tuple_to_tree(tup:tuple) -> SloppyTree:
+    """Recursively convert a nested tuple to a nested dictionary."""
+    # Base case: if the input is not a tuple, return it directly
+    if not isinstance(tup, tuple):
+        return tup
+    
+    # If the tuple contains two elements and the first element is not a tuple,
+    # it's a key-value pair to convert directly into a dictionary item
+    if len(tup) == 2 and not isinstance(tup[0], tuple):
+        return {tup[0]: tuple_to_dict(tup[1])}
+    
+    # Otherwise, recursively convert each item in the tuple into a dictionary
+    return SloppyTree({k: tuple_to_dict(v) for k, v in tup})
+
+
+
+
 @trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     """
@@ -372,9 +382,9 @@ def wscontrolparser_main(myargs:argparse.Namespace) -> int:
         this_parser = globals()[k]
         print(f"\nParsing >>{v}<< with {k}\n")
         if use_resolver:
-            pprint(resolver.resolver(make_tree(this_parser.parse(v))))
+            pprint(resolver.resolver(tuple_to_tree(this_parser.parse(v))))
         else:
-            pprint(make_tree(this_parser.parse(v)))
+            pprint(tuple_to_tree(this_parser.parse(v)))
 
     return os.EX_OK
 
