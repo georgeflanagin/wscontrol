@@ -203,7 +203,7 @@ def snapshot_command():
 def do_clause():
     yield WHITESPACE
     yield do
-    action = yield from_file_clause ^ op_sequence ^ op 
+    action = yield from_file_clause ^ op_sequence 
     raise EndOfGenerator({OpCode.DO : action})
 
     

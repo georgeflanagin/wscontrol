@@ -47,7 +47,7 @@ from   urlogger import URLogger
 ###
 from fsm import fsm
 from resolver import resolver
-from wscontrolparser import wslanguage, make_tree
+from wscontrolparser import wslanguage
 from wsconfig import WSConfig
 
 ###
@@ -198,7 +198,7 @@ class WSConsole(cmd.Cmd):
             print(self.construct_error_message(e))  
             return
         
-        resolved_command = resolver(make_tree(tokens))
+        resolved_command = resolver(tokens)
         logger.debug(f"{resolved_command=}")
         pprint(f"{resolved_command=}")
         # fsm(resolved_command, not self.myargs.no_exec)

@@ -64,6 +64,14 @@ __license__ = 'MIT'
 host_info = netutils.get_ssh_host_info('all')
 logger = logging.getLogger('URLogger')
 
+
+@trap
+def resplinter(t:object) -> object:
+    for i, d in enumerate(t):
+        for k, v in d.items():
+            t[i] = splinter_table[k](v)
+    return t
+
 @trap
 def resolve_config(search_term:str, not_found:object) -> object:
     """
@@ -76,28 +84,56 @@ def resolve_config(search_term:str, not_found:object) -> object:
         
     return d
     
+@trap
+def resolve_ACTION(t:object) -> object:
+    # Nothing to do.
+    return t
 
 @trap
-def resolve_CONTEXT(data:list)
+def resolve_ACTIONS(t:object) -> object:
+    return resplinter(t)
+
+@trap
+def resolve_CAPTURE(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_CONTEXT(t:object) -> object:
     """
     Make sense of host names.
     """
-    d = WSConfig()
-    newlist = []
-    for datum in data:
-        host = datum[OpCode.HOST]
-        host = resolve_config(host, host)
-        hosts = host if isinstance(host, list) else [host]
-        for host in hosts:
-            hostinfo = info.get(host)
-            if hostinfo is None:
-                print(f"No connection info for {host}")
-                continue
-            newlist.append({OpCode.HOST : hostinfo})
-
-    return newlist
+    return resplinter(t)
 
     
+@trap
+def resolve_DO(t:object) -> object:
+    return t
+
+@trap
+def resolve_ERROR(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_EXEC(t:object) -> object:
+    """
+    EXEC is a root node of any tree where it appears. We just 
+    preserve it, and resolve the branches in its tree. Other
+    root node keys just point to this function because the 
+    method of operation is identical.
+    """
+    return resplinter(t)
+
+@trap
+def resolve_FAIL(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_FILE(t:object) -> object:
+    return fileutils.expandall(t)
+
 @trap
 def resolve_FILES(data:list) -> list:
     """
@@ -114,13 +150,7 @@ def resolve_FILES(data:list) -> list:
     scp that might be used to move files between hosts deal well with
     wildcard file names.
     """
-    for i, datum in enumerate(data):
-        data[i] = {datum[OpCode.FILE] : fileutils.expandall(datum[OpCode.FILE])}
-    return data
-
-
-def resolve_REMOTE(o:object) -> object:
-    return o
+    return {k : splinter_table[k](v) for k, v in data.items()}
 
 
 @trap
@@ -129,10 +159,38 @@ def resolve_FROM(data:tuple) -> tuple:
     FROM clause is part of a three-tuple. Only if it is a LOCAL
     file do we try to resolve the file name.
     """
-    clause = data[0]
-    print(clause)
-    if clause[1] is not OpCode.LOCAL: return clause
+    for k, v in data.items():
+        data[k] = v if k is OpCode.REMOTE else splinter_table[k](v)
+    return data
 
+@trap
+def resolve_HOST(t:object) -> object:
+    """
+    Transform t into something beyond its name.
+    """
+    newlist
+    host = resolve_config(host, host)
+    hosts = host if isinstance(host, list) else [host]
+    for host in hosts:
+        hostinfo = info.get(host)
+        if hostinfo is None:
+            print(f"No connection info for {host}")
+            continue
+        newlist.append({OpCode.HOST : hostinfo})
+    return newlist
+
+@trap
+def resolve_IGNORE(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_LITERAL(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_LOCAL(t:object) -> object:
     try:
         command_file = fileutils.expandall(clause[2])
         with open(command_file) as f:
@@ -149,6 +207,68 @@ def resolve_FROM(data:tuple) -> tuple:
     
     return clause[0], clause[1], commands
 
+
+    return t
+
+@trap
+def resolve_LOG(t:object) -> object:
+    return t
+
+    # Nothing to do.
+@trap
+def resolve_NEXT(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_NOP(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_OK(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_ON(t:object) -> object:
+    for k, v in t.items():
+        t[k] = splinter_table[k](v)
+    return t
+
+@trap
+def resolve_ONERROR(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_REMOTE(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_RETRY(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_SEND(t:object) -> object:
+    return resplinter(t)
+
+@trap
+def resolve_SNAPSHOT(t:object) -> object:
+    return resplinter(t)
+
+@trap
+def resolve_STOP(t:object) -> object:
+    # Nothing to do.
+    return t
+
+@trap
+def resolve_TO(t:object) -> object:
+    for k, v in t.items():
+        t[k] = splinter_table[k](v)
+    return t
 
 @trap
 def resolver(t:SloppyTree) -> SloppyTree:
@@ -169,18 +289,18 @@ def resolver(t:SloppyTree) -> SloppyTree:
     returns -- The modified (resolved) parse tree.
 
     """
-    cmd = next(iter(dict(t)))
-    d = t[cmd]
+    for k, v in t.items():
+        splinter_table[k](v)
 
-    for k in d.keys():
-        if k in OpCode:
-            try:
-                d[k] = globals()[f"resolve_{k.name}"](d[k])
-            except:
-                d[k] = resolver(d[k])
-        else:
-            print(f"Found non-OpCode key {k}")
-        
-    t[cmd] = d
-    return t
+###
+# This is the splinter table for the OpCodes.
+###
+splinter_table = dict.fromkeys((_.value for _ in OpCode), None)
+for _ in OpCode.__members__:
+    try:
+        splinter_table[_] = globals()[f"resolve_{_}"]
+    except:
+        print(f"{_} has no assocated function.")
+    
+
 
