@@ -61,7 +61,7 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-host_info = netutils.get_ssh_host_info('all')
+all_hosts = netutils.get_ssh_host_info('all')
 logger = logging.getLogger('URLogger')
 
 
@@ -172,7 +172,7 @@ def resolve_HOST(t:object) -> object:
     host = resolve_config(t, t)
     hosts = host if isinstance(host, list) else [host]
     for host in hosts:
-        hostinfo = info.get(host)
+        hostinfo = all_hosts.get(host)
         if hostinfo is None:
             print(f"No connection info for {host}")
             continue
@@ -301,11 +301,9 @@ def resolver(t:SloppyTree) -> SloppyTree:
 ###
 splinter_table = dict.fromkeys((_.value for _ in OpCode), None)
 for _ in OpCode:
-    print(_)
     try:
         splinter_table[_] = globals()[f"resolve_{_.name}"]
     except:
         print(f"{_} has no assocated function.")
     
-print(splinter_table)
 
