@@ -42,7 +42,7 @@ from   urdecorators import trap
 ###
 # imports and objects that are a part of this project
 ###
-from wscontrolparser import OpCode
+from opcode import OpCode
 from wsview import * #utility for a snapshot
 ###
 # Global objects and initializations

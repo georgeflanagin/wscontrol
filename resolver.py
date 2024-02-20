@@ -150,7 +150,15 @@ def resolve_FILES(data:list) -> list:
     scp that might be used to move files between hosts deal well with
     wildcard file names.
     """
-    return {k : splinter_table[k](v) for k, v in data.items()}
+    if isinstance(data, dict):
+        data = {k:splinter_table[k](v) for k, v in data.items()}
+
+    else:
+        for i, _ in enumerate(data):
+            data[i] = {k:splinter_table[k](v) for k, v in _.items()}
+
+    return data
+
 
 
 @trap
