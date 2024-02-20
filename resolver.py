@@ -168,8 +168,8 @@ def resolve_HOST(t:object) -> object:
     """
     Transform t into something beyond its name.
     """
-    newlist
-    host = resolve_config(host, host)
+    newlist = []
+    host = resolve_config(t, t)
     hosts = host if isinstance(host, list) else [host]
     for host in hosts:
         hostinfo = info.get(host)
@@ -290,17 +290,22 @@ def resolver(t:SloppyTree) -> SloppyTree:
 
     """
     for k, v in t.items():
-        splinter_table[k](v)
+        try:
+            t[k] = splinter_table[k](v)
+        except Exception as e:
+            print(f"Found non OpCode key {k} giving error {e}")
+    return t
 
 ###
 # This is the splinter table for the OpCodes.
 ###
 splinter_table = dict.fromkeys((_.value for _ in OpCode), None)
-for _ in OpCode.__members__:
+for _ in OpCode:
+    print(_)
     try:
-        splinter_table[_] = globals()[f"resolve_{_}"]
+        splinter_table[_] = globals()[f"resolve_{_.name}"]
     except:
         print(f"{_} has no assocated function.")
     
-
+print(splinter_table)
 

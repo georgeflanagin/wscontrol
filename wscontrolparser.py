@@ -203,7 +203,8 @@ def snapshot_command():
 def do_clause():
     yield WHITESPACE
     yield do
-    action = yield from_file_clause ^ op_sequence 
+    action = yield from_file_clause ^ op_sequence ^ op
+    if isinstance(action, str): action = {OpCode.ACTION: action}
     raise EndOfGenerator({OpCode.DO : action})
 
     
@@ -230,10 +231,8 @@ def send_command():
     """
     yield WHITESPACE
     yield lexeme(string('send'))
-    print("send")
     fname = yield filenames ^ filename
     fname = {OpCode.FILES: fname}
-    print(fname)
     yield lexeme(string('to'))
     destination = yield context
     destination = {OpCode.TO : destination}
@@ -269,7 +268,16 @@ def log_command():
 ###
 # the STOP command is just "stop" or "quit"
 ###
-stop_command = WHITESPACE >> lexeme(string('stop')).result(OpCode.STOP) ^ lexeme(string('quit')).result(OpCode.STOP)
+@lexeme
+@generate
+def stop_command():
+    """
+    The stop command can have a value.
+    """
+    yield WHITESPACE
+    yield lexeme(string('stop')) ^ lexeme(string('quit'))
+    exit_code = yield optional(digit_str, '0').parsecmap(int)
+    raise EndOfGenerator({OpCode.STOP : exit_code})
 
 ###
 # the NOP might be followed by anything else, or not. Effectively,

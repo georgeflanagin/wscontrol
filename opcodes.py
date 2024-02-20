@@ -13,9 +13,9 @@ if sys.version_info < min_py:
     print(f"This program requires Python {min_py[0]}.{min_py[1]}, or higher.")
     sys.exit(os.EX_SOFTWARE)
 
-from   enum import IntEnum
+import enum
 
-class OpCode(IntEnum):
+class OpCode(enum.Enum):
     OK          = 0
 
     # Actions to take if there are problems.

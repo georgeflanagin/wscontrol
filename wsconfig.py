@@ -59,33 +59,44 @@ logger = logging.getLogger('URLogger')
 class WSConfig:
     _config = None
     object_created = None
+    config_file = None
 
     @trap
     def __new__(cls, *args, **kwargs):
-        config_file_modified = os.path.getmtime(f"{args[0]}")
 
-        # if config file did not change, return previously created object        
-        if cls._config and not (config_file_modified > object_created): 
-            return cls._config
+        # Figure out how we are being called and if any of this will work
+        # like it should. If called without any arguments, we are just
+        # getting information that is already present.
+        if not WSConfig.object_created:
+            if not len(args):
+                print("No config information.")
+                sys.exit(os.EX_CONFIG)
+        
+            cls.read_toml_data(args[0])
 
-        if not os.path.exists(args[0]):
-            logger.error(f"{args[0]} not found.")
-            sys.exit(os.EX_IOERR)
+        else:
+            config_file_modified = os.path.getmtime(WSConfig.config_file)
+            if config_file_modified > WSConfig.object_created:
+                cls.read_toml_data(WSConfig.config_file)
+             
+        return WSConfig._config
 
+    @classmethod 
+    def read_toml_data(cls, filename:str) -> None:
         try:
-            object_created = time.time()
-            
-            # if the configuration file was modified, update the contents of the object.
-            if config_file_modified > object_created:
-                cls._config = SloppyTree(tomllib.load(open(myargs.config, 'rb')))
-                logger.info(f"{myargs.config} read.")
+            WSConfig._config = SloppyTree(tomllib.load(open(filename, 'rb')))
+            WSConfig.object_created = time.time()
+            WSConfig.config_file = filename
 
         except tomllib.TOMLDecodeError as e:
             logger.error(e)
+            print(f"Bad TOML file {filename}")
             sys.exit(os.EX_CONFIG)
 
-class MyArgs:
-    config = "/home/alina/wscontrol/wscontrol.toml"
+        except Exception as e:
+            logger.error(f"{filename} not found.")
+            sys.exit(os.EX_IOERR)
+            
 
 if __name__ == "__main__":
     myargs = MyArgs()
