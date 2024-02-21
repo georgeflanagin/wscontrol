@@ -98,7 +98,6 @@ class WSConfig:
         return WSConfig._config
 
     @classmethod 
-    @trap
     def read_toml_data(cls, filename:str, kwargs:dict) -> None:
         try:
             WSConfig._config = deepsloppy(tomllib.load(open(filename, 'rb')))
