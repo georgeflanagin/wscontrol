@@ -1,7 +1,3 @@
-###
-# This is the configuration file for wscontrol
-###
-
 ########################################################
 # Section 1: Host definitions.
 ########################################################
@@ -42,6 +38,6 @@ exe.remote = "$(which ssh)"
 exe.copy = "$(which scp)"
 
 
-cmd.newuser = "useradd -m {} -u $(id {} 2>/dev/null) && usermod -aG users {}"
+cmd.newuser = "useradd -m {username} -u $(id {userid} 2>/dev/null) && usermod -aG users {username}"
 cmd.gpuinfo = "nvidia-smi --query-gpu=memory.total,memory.used,power.draw,fan.speed  --format=csv,noheader"
 

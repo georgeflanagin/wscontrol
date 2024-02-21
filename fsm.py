@@ -2,7 +2,7 @@
 import typing
 from   typing import *
 
-min_py = (3, 9)
+min_py = (3, 11)
 
 ###
 # Standard imports, starting with os and sys
@@ -42,7 +42,7 @@ from   urdecorators import trap
 ###
 # imports and objects that are a part of this project
 ###
-from opcode import OpCode
+from opcodes import OpCode
 from wsview import * #utility for a snapshot
 ###
 # Global objects and initializations
@@ -62,6 +62,12 @@ __maintainer__ = 'George Flanagin'
 __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
+
+statements = SloppyTree()
+statements.get_memory = lambda ws : f"ssh -o ConnectTimeout=1 {ws} free"
+statements.get_proc = lambda ws : f"ssh -o ConnectTimeout=1 {ws} nproc"
+statements.in_use = lambda ws : f"ssh -o ConnectTimeout=1 {ws} w"
+
 
 @trap
 def prep_action(t:Union[tuple, str]) -> tuple:
