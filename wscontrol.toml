@@ -40,4 +40,9 @@ exe.copy = "$(which scp)"
 
 cmd.newuser = "useradd -m {username} -u $(id {userid} 2>/dev/null) && usermod -aG users {username}"
 cmd.gpuinfo = "nvidia-smi --query-gpu=memory.total,memory.used,power.draw,fan.speed  --format=csv,noheader"
-
+cmd.free = "{exe} -o ConnectTimeout={timeout} {target} free"
+cmd.get_proc = "{exe} -o ConnectTimeout={timeout} {target} nproc"
+cmd.in_use = "{exe} -o ConnectTimeout={timeout} {target} w"
+cmd.remote_exec = "{exe} -o ConnectTimeout={timeout} {target} {cmd}"
+cmd.copy2ws = "rsync --timeout={timeout} -av {dirname}/ {target}:{dirname}"
+cmd.syncws = "rsync --timeout={timeout} -av --delete {dirname}/ {target}:{dirname}"
