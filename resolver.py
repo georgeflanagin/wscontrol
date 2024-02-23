@@ -269,8 +269,7 @@ def resolve_SNAPSHOT(t:object) -> object:
 
 @trap
 def resolve_STOP(t:object) -> object:
-    # Nothing to do.
-    return t
+    return lambda : sys.exit(os.EX_OK)
 
 @trap
 def resolve_TO(t:object) -> object:

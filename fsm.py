@@ -22,6 +22,7 @@ import contextlib
 import getpass
 mynetid = getpass.getuser()
 import logging
+import re
 import socket
 this_host = socket.gethostname()
 
@@ -38,6 +39,7 @@ import linuxutils
 from   sloppytree import SloppyTree
 import sqlitedb
 from   urdecorators import trap
+import urlogger
 
 ###
 # imports and objects that are a part of this project
@@ -47,15 +49,14 @@ from wsview import * #utility for a snapshot
 ###
 # Global objects and initializations
 ###
-logger = logging.getLogger('URLogger')
+logger = urlogger.URLogger(logfile='wscontrol.log', level=logging.DEBUG)
 verbose = False
-SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
 
 ###
 # Credits
 ###
 __author__ = 'George Flanagin'
-__copyright__ = 'Copyright 2023'
+__copyright__ = 'Copyright 2024'
 __credits__ = None
 __version__ = 0.1
 __maintainer__ = 'George Flanagin'
@@ -63,98 +64,80 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-statements = SloppyTree()
-statements.get_memory = lambda ws : f"ssh -o ConnectTimeout=1 {ws} free"
-statements.get_proc = lambda ws : f"ssh -o ConnectTimeout=1 {ws} nproc"
-statements.in_use = lambda ws : f"ssh -o ConnectTimeout=1 {ws} w"
 
 
-@trap
-def prep_action(t:Union[tuple, str]) -> tuple:
-    """
-    The command string itself may have different kinds of quotes
-    in it.
-    """
-    if isinstance(t, str): t=(t,)
-    t = tuple(s.replace('"', '\\"') for s in t)
-    return " && ".join(t)
+class FSM:
+    SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
+
+    @trap
+    def __init__(self, program:SloppyTree, db:sqlitedb.SQLiteDB) -> int:
+        """
+        Interpret the OpCodes in program, and return a Linux compatible
+        status code.
+        """
+        self.pattern = re.compile(r'@([^ ]*) ') 
+        self.program = program
+        self.db = db
+        
+        self.jump_table = {
+            OpCode.EXEC : self._execute,
+            OpCode.SEND : self._send,
+            OpCode.SNAPSHOT : self._snapshot,
+            OpCode.STOP : self._stop,
+            OpCode.NOP : self._nop, 
+            }
+
+        for k, v in program.items():
+            result = self.jump_table[k](v)
+
+    def record_event(self, command:str, result:int) -> int:
+        host = re.findall(self.pattern, command).pop()
+        try:
+            rowcount = self.db.execute_SQL(SQL, mynetid, host, command, result)
+            return os.EX_OK if rowcount == 1 else rowcount
+        except Exception as e:
+            logger.error(f"Error recording event: {e}")
+            return os.EX_IOERR
 
 
-@trap
-def prep_connection(t:SloppyTree) -> str:
-    h = t.hostname
-    u = t.user
-    k = t.identityfile[0]
-    return f"""ssh -i {k} -o ConnectTimeout=5 {u}@{h} """
+    @staticmethod
+    def squish_spaces(s:str) -> str:
+        return re.sub(r'\s+', ' ', s).strip()
+
+                        
+    def _action(p:SloppyTree) -> str:
+        return p[OpCode.ACTION] 
+
+    def _context(p:SloppyTree) -> list:
+        return
+
+    def _do_it(connection:str, action:str) -> SloppyTree:
+        command = ' '.join((connection, action))
+        result = SloppyTree(dorunrun(command, return_datatype=dict))
+        return result
+        
+
+    def _execute(self, program:SloppyTree) -> int:
+        """
+        Let's *do* something on a host.
+        """
+        connections = self._on(program[OpCode.ON])
+        actions = self._do(program[OpCode.DO])
+        for connection in connections:
+            for action in actions:
+                result = self._do_it(connection, action) 
+                self.record_event(' '.join((connection, action)), result.code)
+                if not result.OK:
+                    self.jump_table[result]()
+
+        return 0
 
 
-@trap
-def prep_destination(t:SloppyTree) -> str:
-    return ""
+    def _host(p:SloppyTree) -> str:
+        return self.squish_spaces(f"""
+            ssh -o ConnectTimeout {p.connecttimeout}
+            {p.user}@{p.hostname}:{p.port}
+            """)
 
-
-@trap
-def fsm(prog:SloppyTree, exec:bool) -> int:
-    """
-    Execute the user's request
-    """
-    request_type = next(iter(dict(prog)))
-    prog = prog[request_type]
-
-    foo = f"fsm_do_{request_type.name}"
-    return globals()[foo](prog, exec)
-
-
-@trap
-def fsm_do_EXEC(prog:SloppyTree, exec:bool) -> int:
-    """
-    prog -- the instructions of the program, now that we have
-        determined the type of request.
-    exec -- must be True to execute the command. This is to support
-        testing and dry-run functionality.
-    """
-
-    global mynetid, this_host
-    db = sqlitedb.SQLiteDBinstance()
-
-    ###
-    # A nested loop across each command to be executed first, and
-    # then looping over the hosts. The reason is that the command
-    # is invariant across the hosts, and there is no need to rebuild
-    # it for each one.
-    ###
-    num_actions = 0
-    for action in prog[OpCode.DO]:
-        action_string = prep_action(action)
-        for target in prog[OpCode.ON]:
-            target_string = prep_connection(SloppyTree(target))
-            cmd = f"{target_string} {action_string}"
-            logger.debug(cmd)
-                    
-            if exec:
-                print(cmd)
-                result = SloppyTree(dorunrun(cmd, timeout=5, return_datatype=dict))
-                db.execute_SQL(SQL, mynetid, this_host, cmd, result.code)
-                if result.OK: 
-                    num_actions +=1 
-                    print(result.stdout)
-                    continue
-                if prog[OpCode.ONERROR] == OpCode.FAIL: 
-                    sys.exit(result.code)
-            else:
-                result = print(cmd)
-
-    return num_actions
-
-@trap
-def fsm_do_SNAPSHOT(prog:SloppyTree, db:SQLiteDB, exec:bool) -> int:
-    """
-    Snapshot is a program that displays CPU and memory availability using curses.
-    """
-    ws = "" #retrieve this from prog:SloppyTree
-    fork_ssh(ws)
-    wrapper(display_data)
-
-@trap
-def fsm_do_SEND(prog:SloppyTree, exec:bool) -> int:
-    pass
+    def _snapshot(p:SloppyTree) -> int:
+        return os.EX_OK
