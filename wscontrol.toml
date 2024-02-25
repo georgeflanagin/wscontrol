@@ -28,6 +28,12 @@ ws.all = [
 
 ws.nas = [ 'truenas', 'newnas', 'trueuser' ]
 
+ws.gpu = [
+    'adam', 'boyi', 'camryn', 
+    'cooper', 'evan', 'irene', 'justin',
+    'kevin',  'michael', 'sarah', 'thais', 
+    ]
+
 ###
 # Most of the parameters for connections are in the SSH
 # config file. The SSH config file is robust and standard,
