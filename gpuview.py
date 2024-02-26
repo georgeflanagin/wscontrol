@@ -76,13 +76,16 @@ padding = lambda x: " "*x
 
 columns = ["host", "gpu_id", "pstate", "powerdraw", "temperature", "fanspeed", "memused", "memtotal", "util"]
 values = []
+myhost = dorunrun("hostname", return_datatype = str) 
 @trap
 def nvidia_smi(ws:str):
     """
     Run nvidia-smi to get the metrics we need.
     """
-    cmd = f"ssh -o ConnectTimeout=5 {ws} nvidia-smi --query-gpu=index,pstate,power.draw,temperature.gpu,fan.speed,memory.used,memory.total,utilization.gpu --format=csv,noheader"
-
+    if ws == myhost:
+        cmd = f"nvidia-smi --query-gpu=index,pstate,power.draw,temperature.gpu,fan.speed,memory.used,memory.total,utilization.gpu --format=csv,noheader"
+    else:
+        cmd = f"ssh -o ConnectTimeout=5 {ws} nvidia-smi --query-gpu=index,pstate,power.draw,temperature.gpu,fan.speed,memory.used,memory.total,utilization.gpu --format=csv,noheader"
     result = dorunrun(cmd, return_datatype=dict)
 
     return result['stdout']
@@ -155,6 +158,12 @@ def prepare_data(ws:str):
     data_for_display = []
     color = "" #identify a color of the graph
     #iterate over several GPUs information and create a list of dictionaries
+
+    if info[0] == '':
+        logger.debug(f"{info} {len(info)}")
+        data_for_display.append("No information because I could not connect.")
+        return data_for_display 
+
     for idx, gpu in enumerate(info):
         values = []
         values.append(ws)
@@ -234,6 +243,8 @@ def fork_ssh() -> None:
                 # each child process locks, writes to and unlocks the file
                 fcntl.lockf(infodat_gpu, fcntl.LOCK_EX)
                 for idx, gpu_data in enumerate(data):
+                    if len(ws) > 7:
+                        ws = ws[:7] 
                     infodat_gpu.write(f'{ws.ljust(7)} {" ".join(data[idx])}\n')
                 infodat_gpu.close()
 
@@ -402,9 +413,8 @@ def display_data(stdscr: object):
 
 @trap
 def gpuview_main(myargs:argparse.Namespace) -> int:
-    print(header_gpu())
-    print(example_map_gpu()[0])
-    print(help_msg_gpu())
+    #print(nvidia_smi("billieholiday"))
+    #print(prepare_data("billieholiday"))
     fork_ssh()
     wrapper(display_data)
     return os.EX_OK
