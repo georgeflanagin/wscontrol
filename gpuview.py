@@ -2,7 +2,7 @@
 import typing
 from   typing import *
 
-min_py = (3, 8)
+min_py = (3, 11)
 
 ###
 # Standard imports, starting with os and sys
@@ -76,7 +76,6 @@ padding = lambda x: " "*x
 
 columns = ["host", "gpu_id", "pstate", "powerdraw", "temperature", "fanspeed", "memused", "memtotal", "util"]
 values = []
-
 @trap
 def nvidia_smi(ws:str):
     """
@@ -167,6 +166,8 @@ def prepare_data(ws:str):
         #if multiple GPUs, append all dicts to a list
         data_for_db.append(dict_info)
 
+        powerdraw = dict_info["powerdraw"].split()[0]
+        fanspeed = dict_info["fanspeed"].split()[0]
         memused = dict_info["memused"].split(" ")[0]
         memtotal = dict_info["memtotal"].split(" ")[0] 
         graph_mem = row(int(memused), int(memtotal), "M")
@@ -175,13 +176,17 @@ def prepare_data(ws:str):
         graph_util = row(int(util), 100, "U") #util is measure in %, so 100 is max 
         
         if anomaly(dict_info["temperature"], memused, memtotal):
-            color = "red"
+            color = "⚠️"
         elif warning(dict_info["temperature"], memused, memtotal):
-            color = "yellow"
+            color = "🛑"
         else:
-            color = "green"       
-
-        data_for_display.append([dict_info["gpu_id"], dict_info["pstate"], dict_info["powerdraw"], dict_info["temperature"], dict_info["fanspeed"], graph_mem, graph_util, "red"])
+            color = "✅"       
+        data_for_display.append(["("+dict_info["gpu_id"]+")"+f"{''.ljust(3)}", #+padding(col_width)+str(col_width), 
+                                dict_info["pstate"].ljust(5), 
+                                powerdraw.ljust(8), 
+                                dict_info["temperature"].ljust(5), 
+                                fanspeed.ljust(5), 
+                                graph_mem.ljust(5), graph_util, color])
 
 
     #insert numerical entries into the database
@@ -229,7 +234,7 @@ def fork_ssh() -> None:
                 # each child process locks, writes to and unlocks the file
                 fcntl.lockf(infodat_gpu, fcntl.LOCK_EX)
                 for idx, gpu_data in enumerate(data):
-                    infodat_gpu.write(f'{ws.ljust(13)} {" ".join(data[idx])}\n')
+                    infodat_gpu.write(f'{ws.ljust(7)} {" ".join(data[idx])}\n')
                 infodat_gpu.close()
 
             except Exception as e:
@@ -253,7 +258,7 @@ def fork_ssh() -> None:
 def warning(temp, memused, memtotal) -> bool:
     """
     Return true if GPU's metrics need attention.
-    True if temperature > 50C, used memory > 50%.
+    True if temperature > 55C, used memory > 50%.
     """
     mem_ratio = (int(memused) * 100) / int(memtotal)
     if int(temp) >=55 or mem_ratio > 50:
@@ -327,10 +332,10 @@ def display_data(stdscr: object):
                 left_panel.hide()
                 help_panel.show()
 
-                help_win.addstr(0, 0, header(), WHITE_AND_BLACK)
-                help_win.addstr(2, 0, example_map()[0], YELLOW_AND_BLACK)
-                help_win.addstr(3, 0, example_map()[1], GREEN_AND_BLACK)
-                help_win.addstr(4, 0, help_msg(), WHITE_AND_BLACK)
+                help_win.addstr(0, 0, gpu_header(), WHITE_AND_BLACK)
+                help_win.addstr(2, 0, example_map_gpu()[0], YELLOW_AND_BLACK)
+                help_win.addstr(3, 0, example_map_gpu()[1], GREEN_AND_BLACK)
+                help_win.addstr(4, 0, help_msg_gpu(), WHITE_AND_BLACK)
 
                 help_win.addstr(15, 0, "Press b to return to the main screen.")
                 help_win.refresh()
@@ -342,27 +347,28 @@ def display_data(stdscr: object):
                     help_panel.move(0,0)
                     help_panel.show()
                 if ch == ord('b'):
+                    help_win_up = False
+                    help_panel.hide()
                     help_win.clear()
                     continue
 
             # map the main window with CPU usage map and memory usage information.
             else:
+                window2.addstr(0, 0, header_gpu(), WHITE_AND_BLACK)
                 with open(DAT_FILE) as infodat:
                     info = infodat.readlines()
                     for idx, graph in enumerate(sorted(info)):
-                        #red = re.search('red$', s)
-                        #color = graph[-7:].strip()
-                        #graph = graph[:-7]
-                        #window2.addstr(idx+2, 0, color, GREEN_AND_BLACK)
-                        if "red" in graph: 
+                        if "🛑" in graph: 
                             window2.addstr(idx+2, 0, graph, RED_AND_BLACK)
-                        elif "yellow" in graph:
+                        elif "⚠️" in graph:
                             window2.addstr(idx+2, 0, graph, YELLOW_AND_BLACK)
-                        elif "green" in graph:
+                        elif "✅" in graph:
                             window2.addstr(idx+2, 0, graph, GREEN_AND_BLACK)
                         else:
                             window2.addstr(idx+2, 0, graph, WHITE_AND_BLACK)
-                        
+                window2.addstr(len(info)+3, 0, f'Last updated {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}', WHITE_AND_BLACK)
+                window2.addstr(len(info)+4, 0, "Press q to quit, h for help OR any other key to refresh.", WHITE_AND_BLACK)
+
                 window2.refresh()
         except:
             pass
@@ -393,9 +399,6 @@ def display_data(stdscr: object):
 
 @trap
 def gpuview_main(myargs:argparse.Namespace) -> int:
-    print(nvidia_smi("irene"))
-    #record_info("irene", nvidia_smi("irene"))
-    print(prepare_data("irene"))
     fork_ssh()
     wrapper(display_data)
     return os.EX_OK
