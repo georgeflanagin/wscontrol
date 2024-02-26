@@ -265,7 +265,7 @@ def resolve_SEND(t:object) -> object:
 
 @trap
 def resolve_SNAPSHOT(t:object) -> object:
-    return resplinter(t)
+    return t
 
 @trap
 def resolve_STOP(t:object) -> object:
