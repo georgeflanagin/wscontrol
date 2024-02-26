@@ -32,7 +32,7 @@ ws.gpu = [
     'adam', 'boyi', 'camryn', 
     'cooper', 'evan', 'irene', 'justin',
     'kevin',  'michael', 'sarah', 'thais', 
-    ]
+    'badenpowell', 'billieholiday']
 
 ###
 # Most of the parameters for connections are in the SSH

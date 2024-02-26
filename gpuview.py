@@ -327,17 +327,20 @@ def display_data(stdscr: object):
         try:
             # window with help message
             if help_win_up:
+                logger.debug(piddly(f"The help window is up"))
                 window2.clear()
                 window2.refresh()
                 left_panel.hide()
                 help_panel.show()
-
-                help_win.addstr(0, 0, gpu_header(), WHITE_AND_BLACK)
+                
+                logger.debug(piddly("lalalla")) #, WHITE_AND_BLACK)
+                
+                help_win.addstr(0, 0, header_gpu(), WHITE_AND_BLACK)
                 help_win.addstr(2, 0, example_map_gpu()[0], YELLOW_AND_BLACK)
                 help_win.addstr(3, 0, example_map_gpu()[1], GREEN_AND_BLACK)
                 help_win.addstr(4, 0, help_msg_gpu(), WHITE_AND_BLACK)
-
-                help_win.addstr(15, 0, "Press b to return to the main screen.")
+    
+                help_win.addstr(16, 0, "Press b to return to the main screen.")
                 help_win.refresh()
                 ch = help_win.getch()
                 if ch == curses.KEY_RESIZE:
@@ -399,13 +402,20 @@ def display_data(stdscr: object):
 
 @trap
 def gpuview_main(myargs:argparse.Namespace) -> int:
+    print(header_gpu())
+    print(example_map_gpu()[0])
+    print(help_msg_gpu())
     fork_ssh()
     wrapper(display_data)
     return os.EX_OK
 
 
 if __name__ == '__main__':
-    
+
+    here       = os.getcwd()
+    progname   = os.path.basename(__file__)[:-3]
+    logfile    = f"{here}/{progname}.log"   
+ 
     parser = argparse.ArgumentParser(prog="gpuview", 
         description="What gpuview does, gpuview does best.")
 
@@ -413,18 +423,21 @@ if __name__ == '__main__':
         help="If present, --input is interpreted to be a whitespace delimited file of host names.")    
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
-    parser.add_argument('-v', '--verbose', action='store_true',
-        help="Be chatty about what is taking place")
     parser.add_argument('--sql', default = "wscontrol.sql",
         help="SQL statements of the project.")
     parser.add_argument('--db', type=str, default="wscontrol.db",
         help="The program will insert data into the database.") 
     parser.add_argument('-r', '--refresh', type=int, default=60,
         help="Refresh interval defaults to 60 seconds. Set to 0 to only run once.")
+    parser.add_argument('--loglevel', type=int,
+        choices=range(logging.FATAL, logging.NOTSET, -10),
+        default=logging.DEBUG,
+        help=f"Logging level, defaults to {logging.DEBUG}")
+
 
     myargs = parser.parse_args()
-    verbose = myargs.verbose
-    logger = wsview_utils.URLogger(level=myargs.verbose)
+    logger = URLogger(logfile=logfile, level=myargs.loglevel)
+
     try:
         db = sqlitedb.SQLiteDB(myargs.db)
     except:
