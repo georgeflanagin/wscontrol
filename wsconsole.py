@@ -45,7 +45,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that are a part of this project
 ###
-from fsm import fsm
+#from fsm import fsm
 from resolver import resolver
 from wscontrolparser import wslanguage
 from wsconfig import WSConfig

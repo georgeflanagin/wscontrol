@@ -185,7 +185,7 @@ def resolve_HOST(t:object) -> object:
             print(f"No connection info for {host}")
             continue
         newlist.append({OpCode.HOST : hostinfo})
-    return newlist
+    return ({OpCode.CONTEXT : newlist})
 
 @trap
 def resolve_IGNORE(t:object) -> object:
