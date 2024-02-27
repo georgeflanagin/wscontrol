@@ -127,9 +127,13 @@ def hostnames():
     yield lparen
     elements = yield sepBy(hostname, comma)
     yield rparen
-    raise EndOfGenerator({OpCode.CONTEXT: elements})
+    raise EndOfGenerator(elements)
 
-context = hostnames ^ hostname
+@lexeme
+@generate
+def context():
+    context = yield hostnames ^ hostname
+    raise EndOfGenerator({OpCode.CONTEXT : context})    
 
 op = quoted
 

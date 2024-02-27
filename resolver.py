@@ -21,6 +21,7 @@ import contextlib
 import getpass
 mynetid = getpass.getuser()
 from   glob import glob
+import inspect
 import logging
 
 ###
@@ -62,11 +63,19 @@ __status__ = 'in progress'
 __license__ = 'MIT'
 
 all_hosts = netutils.get_ssh_host_info('all')
-logger = logging.getLogger('URLogger')
 
+logger = URLogger(logfile = "./resolver.log", level=logging.DEBUG)
+def bookmark():
+    stak = inspect.stack()
+    if len(stak) < 3: 
+        logger.debug('no info')
+    else:
+        logger.debug(f"{stak[1].function} called by {stak[2].function}")
+    
 
 @trap
 def resplinter(t:object) -> object:
+    bookmark()
     for i, d in enumerate(t):
         for k, v in d.items():
             t[i] = splinter_table[k](v)
@@ -77,6 +86,7 @@ def resolve_config(search_term:str, not_found:object) -> object:
     """
     Look through our config information for a symbol.
     """
+    bookmark()
     d = WSConfig()
     for t in search_term.split('.'):    
         d = d.get(t)
@@ -87,15 +97,18 @@ def resolve_config(search_term:str, not_found:object) -> object:
 @trap
 def resolve_ACTION(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_ACTIONS(t:object) -> object:
+    bookmark()
     return resplinter(t)
 
 @trap
 def resolve_CAPTURE(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
@@ -103,16 +116,30 @@ def resolve_CONTEXT(t:object) -> object:
     """
     Make sense of host names.
     """
-    return resplinter(t)
-
+    bookmark()
+    if isinstance(t, dict):
+        return resolve_HOST(t[OpCode.HOST])
+    else: # It's a list of dicts
+        hostlist = []
+        for d in t:
+            info = resolve_HOST(d[OpCode.HOST])
+            # we get a list if the hostname was exploded to
+            # list by looking in the TOML file.
+            if isinstance(info, (list,tuple)):  
+                hostlist.extend(info)
+            else:
+                hostlist.append(info)
+        return hostlist
     
 @trap
 def resolve_DO(t:object) -> object:
+    bookmark()
     return t
 
 @trap
 def resolve_ERROR(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
@@ -123,15 +150,18 @@ def resolve_EXEC(t:object) -> object:
     root node keys just point to this function because the 
     method of operation is identical.
     """
+    bookmark()
     return resplinter(t)
 
 @trap
 def resolve_FAIL(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_FILE(t:object) -> object:
+    bookmark()
     return fileutils.expandall(t)
 
 @trap
@@ -150,6 +180,7 @@ def resolve_FILES(data:list) -> list:
     scp that might be used to move files between hosts deal well with
     wildcard file names.
     """
+    bookmark()
     if isinstance(data, dict):
         data = {k:splinter_table[k](v) for k, v in data.items()}
 
@@ -167,38 +198,38 @@ def resolve_FROM(data:tuple) -> tuple:
     FROM clause is part of a three-tuple. Only if it is a LOCAL
     file do we try to resolve the file name.
     """
+    bookmark()
     for k, v in data.items():
         data[k] = v if k is OpCode.REMOTE else splinter_table[k](v)
     return data
 
 @trap
-def resolve_HOST(t:object) -> object:
+def resolve_HOST(host:str) -> object:
     """
     Transform t into something beyond its name.
     """
-    newlist = []
-    host = resolve_config(t, t)
-    hosts = host if isinstance(host, list) else [host]
-    for host in hosts:
-        hostinfo = all_hosts.get(host)
-        if hostinfo is None:
-            print(f"No connection info for {host}")
-            continue
-        newlist.append({OpCode.HOST : hostinfo})
-    return ({OpCode.CONTEXT : newlist})
+    bookmark()
+    host = resolve_config(host, host)
+    return ( {OpCode.HOST : all_hosts.get(host)} 
+            if isinstance(host, str) else
+        [ {OpCode.HOST : all_hosts.get(h)} for h in host ] )
+
 
 @trap
 def resolve_IGNORE(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_LITERAL(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_LOCAL(t:object) -> object:
+    bookmark()
     try:
         command_file = fileutils.expandall(clause[2])
         with open(command_file) as f:
@@ -220,26 +251,31 @@ def resolve_LOCAL(t:object) -> object:
 
 @trap
 def resolve_LOG(t:object) -> object:
+    bookmark()
     return t
 
     # Nothing to do.
 @trap
 def resolve_NEXT(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_NOP(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_OK(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_ON(t:object) -> object:
+    bookmark()
     for k, v in t.items():
         t[k] = splinter_table[k](v)
     return t
@@ -247,32 +283,39 @@ def resolve_ON(t:object) -> object:
 @trap
 def resolve_ONERROR(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_REMOTE(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_RETRY(t:object) -> object:
     # Nothing to do.
+    bookmark()
     return t
 
 @trap
 def resolve_SEND(t:object) -> object:
+    bookmark()
     return resplinter(t)
 
 @trap
 def resolve_SNAPSHOT(t:object) -> object:
+    bookmark()
     return t
 
 @trap
 def resolve_STOP(t:object) -> object:
+    bookmark()
     return lambda : sys.exit(os.EX_OK)
 
 @trap
 def resolve_TO(t:object) -> object:
+    bookmark()
     for k, v in t.items():
         t[k] = splinter_table[k](v)
     return t
@@ -296,6 +339,7 @@ def resolver(t:SloppyTree) -> SloppyTree:
     returns -- The modified (resolved) parse tree.
 
     """
+    bookmark()
     for k, v in t.items():
         try:
             t[k] = splinter_table[k](v)
