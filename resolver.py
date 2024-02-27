@@ -64,7 +64,7 @@ __license__ = 'MIT'
 
 all_hosts = netutils.get_ssh_host_info('all')
 
-logger = URLogger(logfile = "./resolver.log", level=logging.DEBUG)
+logger = URLogger(logfile = "./resolver.log", level=logging.ERROR)
 def bookmark():
     stak = inspect.stack()
     if len(stak) < 3: 

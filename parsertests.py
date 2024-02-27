@@ -71,9 +71,11 @@ parsertests = (
     #("wslanguage",  """snapshot (erica, evan) """),
     #("wslanguage",  """snapshot ws.parish """),
     #("wslanguage",  """stop"""),
-    ("wslanguage",  'on adam do "date -%s"'),
-    ("wslanguage",  'on ws.parish do "date -%s"'),
-    ("wslanguage",  'on (billieholiday, badenpowell) do "date -%s"'),
+    #("wslanguage",  'on adam do "date -%s"'),
+    #("wslanguage",  'on ws.parish do "date -%s"'),
+    ("wslanguage",  'on (billieholiday, ws.parish) do "date -%s"'),
+
+    
 
     )
 
