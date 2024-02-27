@@ -1,15 +1,18 @@
+export WSCONTROLHOME=$(find $HOME -name wscontrol -type d 2>/dev/null | head -1)
+echo "WSCONTROLHOME is set to $WSCONTROLHOME"
+
 function wscontrol
 {
-    export WSCONTROL_HOME=$(find $HOME -name wscontrol -type d 2>/dev/null)
-    command pushd $WSCONTROL_HOME >/dev/null
+    command pushd $WSCONTROLHOME >/dev/null
+    clear
     python wscontrol.py $@
     command popd >/dev/null
 }
 
 function parsertests
 {
-    export WSCONTROL_HOME=$(find $HOME -name wscontrol -type d 2>/dev/null)
-    command pushd $WSCONTROL_HOME >/dev/null
+    command pushd $WSCONTROLHOME >/dev/null
+    clear
     python wscontrolparser.py $@
     command popd >/dev/null
 }

@@ -91,7 +91,6 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
     ###
     # Step 3: create the interactive console, and begin to read
     # the input.
-    os.system('clear')
     print(logo.LOGO)
     console=WSConsole(myargs)
     try:
@@ -113,7 +112,7 @@ def wscontrol_main(myargs:argparse.Namespace) -> int:
 
 if __name__ == '__main__':
 
-    here       = os.getcwd()
+    here       = os.environ.get('WSCONTROLHOME')
     progname   = os.path.basename(__file__)[:-3]
     configfile = f"{here}/{progname}.toml"
     database   = f"{here}/{progname}.db"

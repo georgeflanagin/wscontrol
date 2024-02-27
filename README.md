@@ -25,7 +25,9 @@ undo-ing mistakes, and redo-ing successes.
 ## Basic operation
 
 Begin by sourcing `wscontrol.sh`. This file contains a few shell functions
-that will make operation easier and less subject to errors.
+that will make operation easier and less subject to errors. It also defines
+`WSCONTROLHOME`, an environment variable that represents the default
+location for the toml configuration file, the database, and the logfile.
 
 `wscontrol` -- brings up the interactive console. The program will wait
 for your next command until you type one of _exit_, _quit_, or _stop_.
@@ -49,7 +51,6 @@ is the system setting, `logging.INFO`.
 
 `-z` -- will clear the logfile before starting.
 
-
 ## Configuration File
 
 Everything about the environment can be placed in a single TOML file. 
@@ -63,6 +64,11 @@ also used, although information in `wscontrol.toml` takes precedence.
 
 ## wscontrol Language
 
+**NOTE:** `wscontrol` has a shell escape that is provided by starting
+any command with an exclamation point (`!`). The entire line is sent
+to a shell process that is a child of `wscontrol`, running with the
+permissions of the current user.
+
 The language is designed to be human readable and writeable, and it 
 makes it easy to do the most common things. Rather than provide the
 entire EBNF grammar --- interested readers can examine the code in
@@ -71,7 +77,6 @@ entire EBNF grammar --- interested readers can examine the code in
 The language is as small as possible, and the parsing is entirely contained
 in the source code file, `wscontrolparser.py`. The following is an 
 approximate grammar for it, leaving out the most trivial definitions:
-
 
 `hostname` -- string of alpha, underscore, and the dot.
 
