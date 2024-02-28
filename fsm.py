@@ -68,6 +68,7 @@ __license__ = 'MIT'
 
 class FSM:
     SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
+    pattern = re.compile(r'@([^ ]*) ') 
 
     @trap
     def __init__(self, program:SloppyTree, db:sqlitedb.SQLiteDB) -> int:
@@ -75,7 +76,6 @@ class FSM:
         Interpret the OpCodes in program, and return a Linux compatible
         status code.
         """
-        self.pattern = re.compile(r'@([^ ]*) ') 
         self.program = program
         self.db = db
         
@@ -87,11 +87,14 @@ class FSM:
             OpCode.NOP : self._nop, 
             }
 
+        # k will be something like OpCode.EXEC or OpCode.SEND, and
+        # the v will have the rest of the information.
         for k, v in program.items():
             result = self.jump_table[k](v)
 
-    def record_event(self, command:str, result:int) -> int:
-        host = re.findall(self.pattern, command).pop()
+
+    def _record_event(self, command:str, result:int) -> int:
+        host = re.findall(FSM.pattern, command).pop()
         try:
             rowcount = self.db.execute_SQL(SQL, mynetid, host, command, result)
             return os.EX_OK if rowcount == 1 else rowcount
@@ -105,11 +108,11 @@ class FSM:
         return re.sub(r'\s+', ' ', s).strip()
 
                         
-    def _action(p:SloppyTree) -> str:
-        return p[OpCode.ACTION] 
+    def _action(self) -> str:
+        return self.program[OpCode.ACTION] 
 
-    def _context(p:SloppyTree) -> list:
-        return
+    def _context(self) -> list:
+        return self.program[OpCode.CONTEXT]
 
     def _do_it(connection:str, action:str) -> SloppyTree:
         command = ' '.join((connection, action))
@@ -117,7 +120,7 @@ class FSM:
         return result
         
 
-    def _execute(self, program:SloppyTree) -> int:
+    def _execute(self) -> int:
         """
         Let's *do* something on a host.
         """
@@ -138,6 +141,8 @@ class FSM:
             ssh -o ConnectTimeout {p.connecttimeout}
             {p.user}@{p.hostname}:{p.port}
             """)
+
+    def _on(self
 
     def _snapshot(p:SloppyTree) -> int:
         return os.EX_OK

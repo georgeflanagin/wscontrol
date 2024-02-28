@@ -306,7 +306,7 @@ def resolve_SEND(t:object) -> object:
 @trap
 def resolve_SNAPSHOT(t:object) -> object:
     bookmark()
-    return t
+    return resplinter(t)
 
 @trap
 def resolve_STOP(t:object) -> object:
