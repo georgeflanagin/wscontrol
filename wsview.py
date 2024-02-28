@@ -58,6 +58,14 @@ __license__ = 'MIT'
 
 DAT_FILE=os.path.join(os.getcwd(), 'info.dat')
 padding = lambda x: " "*x
+logger = wsview_utils.URLogger(level=logging.INFO)
+
+try:
+    db = sqlitedb.SQLiteDB("wscontrol.db")
+except:
+    db = None
+    print(f"Unable to open database")
+    sys.exit(EX_CONFIG)
 
 @trap
 def get_memory(ws:str) -> dict:
@@ -109,12 +117,12 @@ def get_list_of_ws(lst:str):
     """
     Return list of workstations based on who they belong to.
     """
-    with open(myargs.input, "rb") as f:
+    with open("wscontrol.toml", "rb") as f:
         contents = tomllib.load(f)
-    try:
-        result = contents["ws"][lst]
-    except:
-        result = None
+        try:
+            result = contents["ws"][lst]
+        except:
+            result = None
     return result
 
 @trap
@@ -253,7 +261,7 @@ def display_data(stdscr: object):
             pass 
         
         #work around window resize
-        window2.timeout(myargs.refresh*1000)
+        window2.timeout(60*1000)
         k = window2.getch()
         if k == -1:
             pass

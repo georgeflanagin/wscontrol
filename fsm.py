@@ -46,6 +46,8 @@ import urlogger
 ###
 from opcodes import OpCode
 from wsview import * #utility for a snapshot
+from wscontrolparser import *
+from   parsertests import parsertests
 ###
 # Global objects and initializations
 ###
@@ -139,5 +141,25 @@ class FSM:
             {p.user}@{p.hostname}:{p.port}
             """)
 
-    def _snapshot(p:SloppyTree) -> int:
+    def snapshot(p:SloppyTree) -> int:
+        global parsertests
+        for k, v in parsertests:
+            this_parser = globals()[k]
+            if use_resolver:
+                pprint(resolver.resolver(this_parser.parse(v)))
+            else:
+                p = deepsloppy(this_parser.parse(v))
+                print("type of p ", deepsloppy(p))
+
+        ###
+        # add code to extract the value of OpCode.ON and assign it to context variable
+        ###
+        context = "ws.parish"
+        print(context)
+
+        print("sloppy")
+        #print(p.OpCode.HOST)
+        fork_ssh("parish")
+        wrapper(display_data)
+
         return os.EX_OK
