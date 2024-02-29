@@ -33,6 +33,7 @@ from   pprint import pprint
 import linuxutils
 import parsec4
 from   parsec4 import *
+import sloppytree
 from   sloppytree import SloppyTree
 from   urdecorators import trap
 
@@ -318,7 +319,7 @@ def wscontrolparser_main(myargs:argparse.Namespace) -> int:
         this_parser = globals()[k]
         print(f"\nParsing >>{v}<< with {k}\n")
         if use_resolver:
-            pprint(resolver.resolver(this_parser.parse(v)))
+            print(resolver.resolver(this_parser.parse(v)))
         else:
             pprint(this_parser.parse(v))
 
