@@ -48,7 +48,7 @@ import urlogger
 from opcodes import OpCode
 from wsview import * #utility for a snapshot
 from wscontrolparser import *
-from   parsertests import parsertests
+from parsertests import parsertests
 ###
 # Global objects and initializations
 ###
@@ -146,34 +146,22 @@ class FSM:
             """)
 
     def snapshot(p:SloppyTree) -> int:
-        global parsertests
-        use_resolver = True
-        for k, v in parsertests:
-            this_parser = globals()[k]
-            if use_resolver:
-                print("d")
-                p = resolver.resolver(this_parser.parse(v))
-                print("type of p ", type(p))
-            else:
-                print("h")
-                p = this_parser.parse(v)
-                print("type of p ", type(p))
-
-        ###
-        # add code to extract the value of OpCode.ON and assign it to context variable
-        ###
-        context = "ws.parish"
-        print(context)
-
-        print("sloppy")
-        #print(p.OpCode.HOST)
         
+        print("//", fsm_util(), "//")
+        global parsertests
+        for k, v in parsertests:
+            print(k, v)
+            this_parser = globals()[k]
+            p = resolver.resolver(this_parser.parse(v))
+        return p
+        ''' 
+        
+        hostnames = []
+        for host in p.SNAPSHOT.CONTEXT:
+            hostnames.append(SNAPSHOT.CONTEXT.HOST)
 
-
-        # use opcode info to 
-        # build a list of workstations to log in to 
-
-        #fork_ssh("parish")
-        #wrapper(display_data)
-
+        fork_ssh(hostnames)
+        wrapper(display_data)
+    
         return os.EX_OK
+        '''

@@ -47,8 +47,7 @@ import wsconfig
 ###
 # Global objects and initializations
 ###
-use_resolver = False
-
+use_resolver = False 
 ###
 # Credits
 ###
@@ -305,6 +304,16 @@ def wsscript():
     yield eof
     raise EndOfGenerator(statements)
 
+@trap
+def fsm_util():
+    global parsertests
+    print(f"Running {len(parsertests)} tests.")
+    for k, v in parsertests:
+        #print(k, v)
+        this_parser = globals()[k]
+        #print(this_parser)
+        #print(f"\nParsing >>{v}<< with {k}\n")
+        pprint(resolver.resolver(this_parser.parse(v)))
 
 @trap
 def wscontrolparser_main(myargs:argparse.Namespace) -> int:
@@ -336,7 +345,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
 
-    parser.add_argument('-r', '--resolve', action='store_true',
+    parser.add_argument('-r', '--resolve', action='store_true', default = True,
         help="Invoke the resolver if this is set.")
 
     myargs = parser.parse_args()

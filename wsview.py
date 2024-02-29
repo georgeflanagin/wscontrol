@@ -112,6 +112,15 @@ def get_cpu(ws:str) -> dict:
         d["how_busy"] = 0
     return d
 
+@trap 
+def get_hostname(ws:str):
+    """
+    Retrieves a hostname.
+    """
+    cmd = f"ssh -o ConnectTimeout=5 {ws} hostname"
+    result = dorunrun(cmd, return_datatype = str)
+    return result
+'''
 @trap
 def get_list_of_ws(lst:str):
     """
@@ -124,7 +133,7 @@ def get_list_of_ws(lst:str):
         except:
             result = None
     return result
-
+'''
 @trap
 def record_info(ws:str, cpu:dict, mem:dict):
     """
@@ -142,7 +151,8 @@ def prepare_data(ws:str):
     """
     mem = get_memory(ws)
     cpu = get_cpu(ws)
-    
+       
+ 
     #insert numerical entries into the database
     record_info(ws, cpu, mem)
     
@@ -285,17 +295,17 @@ def display_data(stdscr: object):
     pass
 
 @trap
-def fork_ssh(ws:str) -> None:
+def fork_ssh(list_of_hosts:list) -> None:
     '''
     Multiprocesses to ssh to each workstation and retrieve information 
     in parallel, significantly speeding up the process.
     '''
     global DAT_FILE, logger
 
-    try:
-        ws_lst = get_list_of_ws(ws)
-    except:
-        logger.info(piddly("Nothing to do for no workstation."))
+    #try:
+    #    ws_lst = get_list_of_ws(ws)
+    #except:
+    #    logger.info(piddly("Nothing to do for no workstation."))
 
 
     try:
@@ -311,7 +321,7 @@ def fork_ssh(ws:str) -> None:
 
     pids = set()
 
-    for ws in ws_lst:            
+    for host in list_of_hosts:            
 
         # Parent process records the child's PID.
         if (pid := os.fork()):
@@ -320,10 +330,14 @@ def fork_ssh(ws:str) -> None:
 
         with open(DAT_FILE, 'a+') as infodat:
             try:
-                data = prepare_data(ws)
-
+                
+                data = prepare_data(host)
+                ws = get_hostname(host)
                 # each child process locks, writes to and unlocks the file
                 fcntl.lockf(infodat, fcntl.LOCK_EX)
+
+                if "No" in data:
+                    ws = host
                 infodat.write(f'{ws.ljust(13)} {data}\n')
                 infodat.close()
                 
@@ -353,7 +367,7 @@ def wsview_main() -> int:
     #record_info("adam")
     #draw_data("parish")
     
-    fork_ssh(myargs.ws)
+    fork_ssh(["thais", "anna"])
     wrapper(display_data)
     return os.EX_OK
 
@@ -386,7 +400,7 @@ if __name__ == '__main__':
     logger = wsview_utils.URLogger(level=myargs.verbose)
    
     # add a check for --ws argument validity and suggest valid entry
-    if get_list_of_ws(myargs.ws) is None:
+    '''if get_list_of_ws(myargs.ws) is None:
         with open(myargs.input, "rb") as f:
             contents = tomllib.load(f)
             for k, v in contents.items():
@@ -395,7 +409,7 @@ if __name__ == '__main__':
                     print("Error in the provided --ws argument")
                     print(f'Try one of the existing lists: {", ".join(list(suggested_lst))}')
         sys.exit()
-
+    '''
     try:
         db = sqlitedb.SQLiteDB(myargs.db)
     except:

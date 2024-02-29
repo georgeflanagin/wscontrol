@@ -36,6 +36,7 @@ import fileutils
 import linuxutils
 import netutils
 from   sloppytree import SloppyTree
+import sloppytree
 from   urdecorators import trap
 from   urlogger import URLogger, piddly
 
@@ -87,7 +88,7 @@ def resolve_config(search_term:str, not_found:object) -> object:
     Look through our config information for a symbol.
     """
     bookmark()
-    d = WSConfig()
+    d = WSConfig("wscontrol.toml")
     for t in search_term.split('.'):    
         d = d.get(t)
         if d is None: return not_found
@@ -345,7 +346,8 @@ def resolver(t:SloppyTree) -> SloppyTree:
             t[k] = splinter_table[k](v)
         except Exception as e:
             print(f"Found non OpCode key {k} giving error {e}")
-    return sloppytree.deepsloppy(t)
+    #return sloppytree.deepsloppy(t)
+    return SloppyTree(t)
 
 ###
 # This is the splinter table for the OpCodes.
