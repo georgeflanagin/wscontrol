@@ -306,7 +306,7 @@ def resolve_SEND(t:object) -> object:
 @trap
 def resolve_SNAPSHOT(t:object) -> object:
     bookmark()
-    return t
+    return resplinter(t)
 
 @trap
 def resolve_STOP(t:object) -> object:
@@ -345,7 +345,7 @@ def resolver(t:SloppyTree) -> SloppyTree:
             t[k] = splinter_table[k](v)
         except Exception as e:
             print(f"Found non OpCode key {k} giving error {e}")
-    return t
+    return sloppytree.deepsloppy(t)
 
 ###
 # This is the splinter table for the OpCodes.

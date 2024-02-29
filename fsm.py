@@ -37,6 +37,7 @@ this_host = socket.gethostname()
 from   dorunrun import dorunrun
 import linuxutils
 from   sloppytree import SloppyTree
+from   sloppytree import *
 import sqlitedb
 from   urdecorators import trap
 import urlogger
@@ -70,6 +71,7 @@ __license__ = 'MIT'
 
 class FSM:
     SQL = """INSERT INTO master (who, host, command, result) VALUES (?, ?, ?, ?)"""
+    pattern = re.compile(r'@([^ ]*) ') 
 
     @trap
     def __init__(self, program:SloppyTree, db:sqlitedb.SQLiteDB) -> int:
@@ -77,7 +79,6 @@ class FSM:
         Interpret the OpCodes in program, and return a Linux compatible
         status code.
         """
-        self.pattern = re.compile(r'@([^ ]*) ') 
         self.program = program
         self.db = db
         
@@ -89,11 +90,14 @@ class FSM:
             OpCode.NOP : self._nop, 
             }
 
+        # k will be something like OpCode.EXEC or OpCode.SEND, and
+        # the v will have the rest of the information.
         for k, v in program.items():
             result = self.jump_table[k](v)
 
-    def record_event(self, command:str, result:int) -> int:
-        host = re.findall(self.pattern, command).pop()
+
+    def _record_event(self, command:str, result:int) -> int:
+        host = re.findall(FSM.pattern, command).pop()
         try:
             rowcount = self.db.execute_SQL(SQL, mynetid, host, command, result)
             return os.EX_OK if rowcount == 1 else rowcount
@@ -107,11 +111,11 @@ class FSM:
         return re.sub(r'\s+', ' ', s).strip()
 
                         
-    def _action(p:SloppyTree) -> str:
-        return p[OpCode.ACTION] 
+    def _action(self) -> str:
+        return self.program[OpCode.ACTION] 
 
-    def _context(p:SloppyTree) -> list:
-        return
+    def _context(self) -> list:
+        return self.program[OpCode.CONTEXT]
 
     def _do_it(connection:str, action:str) -> SloppyTree:
         command = ' '.join((connection, action))
@@ -119,7 +123,7 @@ class FSM:
         return result
         
 
-    def _execute(self, program:SloppyTree) -> int:
+    def _execute(self) -> int:
         """
         Let's *do* something on a host.
         """
@@ -143,13 +147,17 @@ class FSM:
 
     def snapshot(p:SloppyTree) -> int:
         global parsertests
+        use_resolver = True
         for k, v in parsertests:
             this_parser = globals()[k]
             if use_resolver:
-                pprint(resolver.resolver(this_parser.parse(v)))
+                print("d")
+                p = resolver.resolver(this_parser.parse(v))
+                print("type of p ", type(p))
             else:
-                p = deepsloppy(this_parser.parse(v))
-                print("type of p ", deepsloppy(p))
+                print("h")
+                p = this_parser.parse(v)
+                print("type of p ", type(p))
 
         ###
         # add code to extract the value of OpCode.ON and assign it to context variable
@@ -159,7 +167,13 @@ class FSM:
 
         print("sloppy")
         #print(p.OpCode.HOST)
-        fork_ssh("parish")
-        wrapper(display_data)
+        
+
+
+        # use opcode info to 
+        # build a list of workstations to log in to 
+
+        #fork_ssh("parish")
+        #wrapper(display_data)
 
         return os.EX_OK
