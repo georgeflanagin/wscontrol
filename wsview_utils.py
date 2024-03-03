@@ -176,6 +176,14 @@ def header():
     header = "Workstation".ljust(14)+"Cores"+padding(38)+"Memory\n"
     return header
 
+@trap 
+def header_gpu():
+    """
+    The header for the GPU snapshot program.
+    """
+    header = "WS".ljust(8)+ "GPU".ljust(5)+ "PState".ljust(8)+ "Pwr(W)".ljust(9)+ "C°".ljust(4)+ "Fan(%)".ljust(25)+ "Memory".ljust(40)+ "Utilization"
+    return header
+   
 @trap
 def help_msg() -> str:
     """
@@ -193,6 +201,24 @@ def help_msg() -> str:
     msg = "".join((a, b, c, d, e, f, g))
 
     return msg
+ 
+@trap
+def help_msg_gpu() -> str:
+    """
+    Write help message here.
+    """
+
+    a = "\nThis program displays GPU state of the workstations (WS).\n\n"
+    b = "Next to the name of the WS, you can see important metrics and the graphs.\n"
+    c = "The first graph is displaying memory occupation of GPUs.\n"
+    d = "The second graph is displaying GPU utilization.\n\n"
+    e = "If the graph is colored in green, that means that its memory occupation is less than 50% and temperature is less than 55 C°.\n"
+    f = "If the graph is colored yellow or has Almost Full sign, that means its memory occupation is more than 50% but less than 80% and temperature is more than 50 C° but less than 65 C°.\n"
+    g = "The red color means that GPU's memory occupation is more than 80% and temperature is more than 65 C°.\n"
+
+    msg = "".join((a, b, c, d, e, f, g))
+
+    return msg
 
 @trap
 def example_map():
@@ -200,6 +226,12 @@ def example_map():
     graph2 = "alexis        [________________________________________] [________________________________________] "
 
     return list((graph1, graph2))
+
+@trap
+def example_map_gpu():
+    graph1 = "adam    (0)    P8    22.44    57    0     [MMMM____________________________________] [UUUUUUUU________________________________] ⚠️"
+    graph2 = "boyi    (0)    P8    28.44    33    30    [MM______________________________________] [________________________________________] ✅"
+    return list((graph1, graph2))    
 
 ######################## ncurses utility end ######################
 
