@@ -153,15 +153,13 @@ class FSM:
             print(k, v)
             this_parser = globals()[k]
             p = resolver.resolver(this_parser.parse(v))
-        return p
-        ''' 
-        
+ 
         hostnames = []
-        for host in p.SNAPSHOT.CONTEXT:
-            hostnames.append(SNAPSHOT.CONTEXT.HOST)
+        lst = p[28][0][67]
+        for idx, host in enumerate(lst):
+            hostnames.append(lst[idx][64].hostname)
 
         fork_ssh(hostnames)
         wrapper(display_data)
     
         return os.EX_OK
-        '''

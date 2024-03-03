@@ -17,6 +17,7 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 import argparse
+import collections
 import contextlib
 import getpass
 mynetid = getpass.getuser()
@@ -35,8 +36,8 @@ import logging
 import fileutils
 import linuxutils
 import netutils
-from   sloppytree import SloppyTree
 import sloppytree
+from   sloppytree import SloppyTree, deepsloppy
 from   urdecorators import trap
 from   urlogger import URLogger, piddly
 
@@ -63,7 +64,7 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-all_hosts = netutils.get_ssh_host_info('all')
+all_hosts = netutils.get_ssh_host_info('all', "chemworkstations")
 
 logger = URLogger(logfile = "./resolver.log", level=logging.ERROR)
 def bookmark():
@@ -73,6 +74,29 @@ def bookmark():
     else:
         logger.debug(f"{stak[1].function} called by {stak[2].function}")
     
+@trap
+def enum_keys_to_ints(t:SloppyTree) -> SloppyTree:
+    """
+    Swap out the OpCode keys for their values.
+    """
+    if isinstance(t, list): 
+        for i, v in enumerate(t):
+            t[i] = enum_keys_to_ints(v)
+        return t
+
+    if not isinstance(t, collections.abc.Mapping):
+        return t  # Not a dictionary, return as is
+
+    new_t = SloppyTree()
+    for k, v in t.items():
+        # Convert key if it's an IntEnum, else leave as is
+        new_k = k.value if isinstance(k, OpCode) else k
+        # Recursively process values
+        new_v = enum_keys_to_ints(v)
+        new_t[new_k] = new_v
+
+    return new_t
+
 
 @trap
 def resplinter(t:object) -> object:
@@ -346,8 +370,7 @@ def resolver(t:SloppyTree) -> SloppyTree:
             t[k] = splinter_table[k](v)
         except Exception as e:
             print(f"Found non OpCode key {k} giving error {e}")
-    #return sloppytree.deepsloppy(t)
-    return SloppyTree(t)
+    return enum_keys_to_ints(SloppyTree(t))
 
 ###
 # This is the splinter table for the OpCodes.

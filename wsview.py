@@ -321,7 +321,7 @@ def fork_ssh(list_of_hosts:list) -> None:
 
     pids = set()
 
-    for host in list_of_hosts:            
+    for ws in list_of_hosts:            
 
         # Parent process records the child's PID.
         if (pid := os.fork()):
@@ -331,13 +331,10 @@ def fork_ssh(list_of_hosts:list) -> None:
         with open(DAT_FILE, 'a+') as infodat:
             try:
                 
-                data = prepare_data(host)
-                ws = get_hostname(host)
+                data = prepare_data(ws)
                 # each child process locks, writes to and unlocks the file
                 fcntl.lockf(infodat, fcntl.LOCK_EX)
 
-                if "No" in data:
-                    ws = host
                 infodat.write(f'{ws.ljust(13)} {data}\n')
                 infodat.close()
                 
