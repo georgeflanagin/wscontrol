@@ -69,7 +69,7 @@ __license__ = 'MIT'
 
 DAT_FILE=os.path.join(os.getcwd(), 'info_gpu.dat')
 padding = lambda x: " "*x
-
+logger = wsview_utils.URLogger(level=logging.INFO)
 
 ### cleaned up
 #nvidia-smi --query-gpu=index,pstate,power.draw,temperature.gpu,fan.speed,memory.used,memory.total,utilization.gpu --format=csv,noheader
@@ -77,6 +77,14 @@ padding = lambda x: " "*x
 columns = ["host", "gpu_id", "pstate", "powerdraw", "temperature", "fanspeed", "memused", "memtotal", "util"]
 values = []
 myhost = dorunrun("hostname", return_datatype = str) 
+
+try:
+    db = sqlitedb.SQLiteDB("wscontrol.db")
+except:
+    db = None
+    print(f"Unable to open wscontrol.db")
+    sys.exit(EX_CONFIG)
+
 @trap
 def nvidia_smi(ws:str):
     """
@@ -110,7 +118,7 @@ def create_gpu_table():
         """
     db.execute_SQL(gpu_create) #create table if does not exist
     return
-
+'''
 @trap
 def get_list_GPU_ws():
     """
@@ -123,7 +131,7 @@ def get_list_GPU_ws():
     except:
         result = None
     return result
-
+'''
 @trap
 def record_info(ws:str, info):
     """
@@ -204,18 +212,17 @@ def prepare_data(ws:str):
     return data_for_display 
 
 @trap
-def fork_ssh() -> None:
+def fork_ssh(ws_lst: list) -> None:
     '''
     Multiprocesses to ssh to each workstation and retrieve information
     in parallel, significantly speeding up the process.
     '''
     global DAT_FILE, logger
-
-    try:
-        ws_lst = get_list_GPU_ws()
-    except:
-        logger.info(piddly("Nothing to do for no workstation."))
-
+    
+    #try:
+    #    ws_lst = get_list_GPU_ws()
+    #except:
+    #    logger.info(piddly("Nothing to do for no workstation."))
 
     try:
         os.unlink(DAT_FILE)
@@ -388,7 +395,7 @@ def display_data(stdscr: object):
             pass
 
         #work around window resize
-        window2.timeout(myargs.refresh*1000)
+        window2.timeout(60*1000)
         k = window2.getch()
         if k == -1:
             pass
@@ -415,7 +422,7 @@ def display_data(stdscr: object):
 def gpuview_main(myargs:argparse.Namespace) -> int:
     #print(nvidia_smi("billieholiday"))
     #print(prepare_data("billieholiday"))
-    fork_ssh()
+    fork_ssh(["anna", "billieholiday"])
     wrapper(display_data)
     return os.EX_OK
 

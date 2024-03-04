@@ -1,0 +1,12 @@
+Host newnas
+    Hostname newnas 
+    User root
+
+Host truenas
+    HostName truenas
+    User root
+
+Host trueuser
+    Hostname trueuser
+    User root
+

@@ -64,7 +64,7 @@ __email__ = ['gflanagin@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-all_hosts = netutils.get_ssh_host_info('all', "chemworkstations")
+all_hosts = netutils.get_ssh_host_info('all', "config")
 
 logger = URLogger(logfile = "./resolver.log", level=logging.ERROR)
 def bookmark():
@@ -307,6 +307,12 @@ def resolve_ON(t:object) -> object:
 
 @trap
 def resolve_ONERROR(t:object) -> object:
+    # Nothing to do.
+    bookmark()
+    return t
+
+@trap
+def resolve_OPTION(t:object) -> object:
     # Nothing to do.
     bookmark()
     return t

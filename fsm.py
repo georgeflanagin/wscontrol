@@ -46,7 +46,10 @@ import urlogger
 # imports and objects that are a part of this project
 ###
 from opcodes import OpCode
-from wsview import * #utility for a snapshot
+import wsview #utility for a cpu snapshot
+from wsview import *
+import gpuview #utility for a gpu snapshot
+from gpuview import *
 from wscontrolparser import *
 from parsertests import parsertests
 ###
@@ -145,21 +148,47 @@ class FSM:
             {p.user}@{p.hostname}:{p.port}
             """)
 
-    def snapshot(p:SloppyTree) -> int:
-        
-        print("//", fsm_util(), "//")
+    def send() -> str:
         global parsertests
         for k, v in parsertests:
             print(k, v)
             this_parser = globals()[k]
             p = resolver.resolver(this_parser.parse(v))
+        
+        what =  p[20][0][65]
+        hostnames = p[20][1][67]
+        for idx, host in enumerate(hostnames):
+            where = hostnames[idx][64].hostname
+            cmd = f"scp {what} {where}:/home/" 
+            result = dorunrun(cmd)
+
+        return result
+
+
+    #works for snapshot on ws.parish
+    def snapshot() -> int:
+        
+        global parsertests
+        
+        for k, v in parsertests:
+            print("//", k, '??',  v)
+            this_parser = globals()[k]
+            where = resolver.enum_keys_to_ints(SloppyTree(this_parser.parse(v)))
+            p = resolver.resolver(this_parser.parse(v))
  
         hostnames = []
+        print(p)
         lst = p[28][0][67]
         for idx, host in enumerate(lst):
             hostnames.append(lst[idx][64].hostname)
 
-        fork_ssh(hostnames)
-        wrapper(display_data)
-    
+        if where[28][0][19][67][64] == "ws.gpu":
+            gpuview.fork_ssh(hostnames)
+            gpuview.wrapper(display_data)
+        else:
+            wsview.fork_ssh(hostnames)
+            wsview.wrapper(display_data)    
+
         return os.EX_OK
+
+    

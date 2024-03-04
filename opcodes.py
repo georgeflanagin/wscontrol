@@ -38,7 +38,7 @@ class OpCode(enum.Enum):
     FILES       = 26
     LITERAL     = 27
     SNAPSHOT    = 28
-    
+    OPTION      = 29    
 
     # Typing info for data
     HOST        = 64

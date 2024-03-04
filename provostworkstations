@@ -1,0 +1,10 @@
+Host billieholiday
+    Hostname billieholiday 
+    User milesdavis
+
+Host badenpowell
+    Hostname badenpowell
+
+Host lesteryoung
+    Hostname lesteryoung
+    User root

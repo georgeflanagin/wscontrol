@@ -74,7 +74,7 @@ rparen  = lexeme(string(RPAREN))
 send    = lexeme(string('send'))
 to      = lexeme(string('to'))
 snapshot = lexeme(string('snapshot'))
-
+gpu = lexeme(string('ws.gpu'))
 seq_pt  = lexeme(string(SEMICOLON))
 
 ###
@@ -188,7 +188,7 @@ def on_error_clause():
     error_action = yield action
     raise EndOfGenerator({OpCode.ONERROR : error_action})
 
-
+'''
 @lexeme
 @generate
 def snapshot_command():
@@ -200,7 +200,7 @@ def snapshot_command():
     location = yield context
     location = {OpCode.ON : location}
     raise EndOfGenerator({OpCode.SNAPSHOT : location})
-
+'''
 
 @lexeme
 @generate
@@ -327,6 +327,7 @@ def wscontrolparser_main(myargs:argparse.Namespace) -> int:
     for k, v in parsertests:
         this_parser = globals()[k]
         print(f"\nParsing >>{v}<< with {k}\n")
+        pprint(this_parser.parse(v))
         if use_resolver:
             print(resolver.resolver(this_parser.parse(v)))
         else:
