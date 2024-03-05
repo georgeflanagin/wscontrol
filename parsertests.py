@@ -52,9 +52,9 @@ parsertests = (
     #("wslanguage", "send kevin to kevin on_error ignore"),
 
     # one file to multiple hosts.
-    #("wslanguage",  "send /ab/c/d to (adam, anna, kevin)"),
+    ("wslanguage",  "send /ab/c/d to (adam, anna, kevin)"),
     # multiple files to multiple hosts.
-    #("wslanguage",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
+    ("wslanguage",  "send (/ab/c/d, $HOME/.bashrc) to (adam, anna, kevin)"),
 
     # These are tests on the full language.
     #("wslanguage",  'on (sarah, evan, kevin) do "cat /etc/fstab"'),   
@@ -72,7 +72,7 @@ parsertests = (
     #("wslanguage",  """snapshot ws.parish """),
     #("wslanguage",  """stop"""),
     #("wslanguage",  'on adam do "date -%s"'),
-    ("wslanguage",  'snapshot ws.parish'),
+    #("wslanguage",  'snapshot ws.parish'),
     #("wslanguage",  'on (billieholiday, ws.parish) do "date -%s"'),
 
     

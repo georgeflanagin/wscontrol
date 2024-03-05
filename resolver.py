@@ -66,13 +66,9 @@ __license__ = 'MIT'
 
 all_hosts = netutils.get_ssh_host_info('all')
 
-logger = URLogger(logfile = "./resolver.log", level=logging.ERROR)
-def bookmark():
-    stak = inspect.stack()
-    if len(stak) < 3: 
-        logger.debug('no info')
-    else:
-        logger.debug(f"{stak[1].function} called by {stak[2].function}")
+logger = URLogger(logfile = "./resolver.log", level=logging.DEBUG)
+def log_bookmark():
+    logger.debug(linuxutils.bookmark()[1:])
     
 @trap
 def enum_keys_to_ints(t:SloppyTree) -> SloppyTree:
@@ -100,7 +96,7 @@ def enum_keys_to_ints(t:SloppyTree) -> SloppyTree:
 
 @trap
 def resplinter(t:object) -> object:
-    bookmark()
+    log_bookmark()
     for i, d in enumerate(t):
         for k, v in d.items():
             t[i] = splinter_table[k](v)
@@ -111,7 +107,7 @@ def resolve_config(search_term:str, not_found:object) -> object:
     """
     Look through our config information for a symbol.
     """
-    bookmark()
+    log_bookmark()
     d = WSConfig()
     for t in search_term.split('.'):    
         d = d.get(t)
@@ -122,18 +118,18 @@ def resolve_config(search_term:str, not_found:object) -> object:
 @trap
 def resolve_ACTION(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_ACTIONS(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return resplinter(t)
 
 @trap
 def resolve_CAPTURE(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
@@ -141,7 +137,7 @@ def resolve_CONTEXT(t:object) -> object:
     """
     Make sense of host names.
     """
-    bookmark()
+    log_bookmark()
     if isinstance(t, dict):
         return resolve_HOST(t[OpCode.HOST])
     else: # It's a list of dicts
@@ -158,13 +154,13 @@ def resolve_CONTEXT(t:object) -> object:
     
 @trap
 def resolve_DO(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_ERROR(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
@@ -175,18 +171,18 @@ def resolve_EXEC(t:object) -> object:
     root node keys just point to this function because the 
     method of operation is identical.
     """
-    bookmark()
+    log_bookmark()
     return resplinter(t)
 
 @trap
 def resolve_FAIL(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_FILE(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return fileutils.expandall(t)
 
 @trap
@@ -205,7 +201,7 @@ def resolve_FILES(data:list) -> list:
     scp that might be used to move files between hosts deal well with
     wildcard file names.
     """
-    bookmark()
+    log_bookmark()
     if isinstance(data, dict):
         data = {k:splinter_table[k](v) for k, v in data.items()}
 
@@ -223,7 +219,7 @@ def resolve_FROM(data:tuple) -> tuple:
     FROM clause is part of a three-tuple. Only if it is a LOCAL
     file do we try to resolve the file name.
     """
-    bookmark()
+    log_bookmark()
     for k, v in data.items():
         data[k] = v if k is OpCode.REMOTE else splinter_table[k](v)
     return data
@@ -233,7 +229,7 @@ def resolve_HOST(host:str) -> object:
     """
     Transform t into something beyond its name.
     """
-    bookmark()
+    log_bookmark()
     host = resolve_config(host, host)
     return ( {OpCode.HOST : all_hosts.get(host)} 
             if isinstance(host, str) else
@@ -243,18 +239,18 @@ def resolve_HOST(host:str) -> object:
 @trap
 def resolve_IGNORE(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_LITERAL(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_LOCAL(t:object) -> object:
-    bookmark()
+    log_bookmark()
     try:
         command_file = fileutils.expandall(clause[2])
         with open(command_file) as f:
@@ -276,31 +272,31 @@ def resolve_LOCAL(t:object) -> object:
 
 @trap
 def resolve_LOG(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return t
 
     # Nothing to do.
 @trap
 def resolve_NEXT(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_NOP(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_OK(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_ON(t:object) -> object:
-    bookmark()
+    log_bookmark()
     for k, v in t.items():
         t[k] = splinter_table[k](v)
     return t
@@ -308,39 +304,39 @@ def resolve_ON(t:object) -> object:
 @trap
 def resolve_ONERROR(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_REMOTE(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_RETRY(t:object) -> object:
     # Nothing to do.
-    bookmark()
+    log_bookmark()
     return t
 
 @trap
 def resolve_SEND(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return resplinter(t)
 
 @trap
 def resolve_SNAPSHOT(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return resplinter(t)
 
 @trap
 def resolve_STOP(t:object) -> object:
-    bookmark()
+    log_bookmark()
     return lambda : sys.exit(os.EX_OK)
 
 @trap
 def resolve_TO(t:object) -> object:
-    bookmark()
+    log_bookmark()
     for k, v in t.items():
         t[k] = splinter_table[k](v)
     return t
@@ -364,7 +360,7 @@ def resolver(t:SloppyTree) -> SloppyTree:
     returns -- The modified (resolved) parse tree.
 
     """
-    bookmark()
+    log_bookmark()
     for k, v in t.items():
         try:
             t[k] = splinter_table[k](v)
