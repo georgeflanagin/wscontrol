@@ -20,6 +20,7 @@ import argparse
 from   collections.abc import Iterable, Hashable
 import contextlib
 from   enum import IntEnum
+import logging
 from   pprint import pprint
 
 ###
@@ -31,6 +32,7 @@ from   pprint import pprint
 # From hpclib
 ###
 import linuxutils
+from   linuxutils import bookmark
 import parsec4
 from   parsec4 import *
 import sloppytree
@@ -92,6 +94,8 @@ action = ( lexeme(string('ignore')).result(OpCode.IGNORE) |
 ###
 hostname = lexeme(regex('[A-Za-z_.]+'))
 filename = lexeme(regex('[-A-Za-z/.*_$~]+'))
+
+
 
 @lexeme
 @generate
@@ -237,7 +241,8 @@ def send_command():
     yield WHITESPACE
     yield lexeme(string('send'))
     fname = yield filenames ^ filename
-    fname = {OpCode.FILES: fname}
+    if next(iter(fname)) == OpCode.FILE:
+        fname = {OpCode.FILES: fname}
     yield lexeme(string('to'))
     destination = yield context
     destination = {OpCode.TO : destination}
