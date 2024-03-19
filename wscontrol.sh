@@ -17,4 +17,4 @@ function parsertests
     command popd >/dev/null
 }
 
-wscontrol $@
+# wscontrol $@

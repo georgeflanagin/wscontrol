@@ -46,3 +46,14 @@ cmd.in_use = "{exe} -o ConnectTimeout={timeout} {target} w"
 cmd.remote_exec = "{exe} -o ConnectTimeout={timeout} {target} {cmd}"
 cmd.copy2ws = "rsync --timeout={timeout} -av {dirname}/ {target}:{dirname}"
 cmd.syncws = "rsync --timeout={timeout} -av --delete {dirname}/ {target}:{dirname}"
+
+########################################################
+# Section 3: SSH config info.
+#
+#  We include this configuration info with the project 
+#  so that the required information about the network
+#  is available within the program without regard to 
+#  the user.
+########################################################
+ssh.configfile = $WSCONTROLHOME/sshconfig
+

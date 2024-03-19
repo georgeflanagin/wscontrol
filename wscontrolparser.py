@@ -242,7 +242,7 @@ def send_command():
     yield lexeme(string('send'))
     fname = yield filenames ^ filename
     if next(iter(fname)) == OpCode.FILE:
-        fname = {OpCode.FILES: fname}
+        fname = {OpCode.FILES: [fname]}
     yield lexeme(string('to'))
     destination = yield context
     destination = {OpCode.TO : destination}
