@@ -47,9 +47,7 @@ import urlogger
 ###
 from opcodes import OpCode
 import wsview #utility for a cpu snapshot
-from wsview import *
 import gpuview #utility for a gpu snapshot
-from gpuview import *
 from wscontrolparser import *
 from parsertests import parsertests
 ###
@@ -150,22 +148,30 @@ class FSM:
 
     def send() -> str:
         global parsertests
+        multiple_files = False
         for k, v in parsertests:
             print(k, v)
             this_parser = globals()[k]
             p = resolver.resolver(this_parser.parse(v))
-        
-        what =  p[20][0][65]
-        hostnames = p[20][1][67]
-        for idx, host in enumerate(hostnames):
-            where = hostnames[idx][64].hostname
-            cmd = f"scp {what} {where}:/home/" 
-            result = dorunrun(cmd)
-
-        return result
-
-
-    #works for snapshot on ws.parish
+            
+            one_file = p[20][0][65]
+            if one_file == {}:
+                multiple_files = True # type(p[20][0][65])
+            
+            hostnames = p[20][1][67]
+             
+            for idx, host in enumerate(hostnames):
+                where = hostnames[idx][64].hostname
+                if multiple_files:
+                    what = p[20][0][26]
+                    for idx, file in enumerate(what):
+                        cmd = f"scp {what[idx][65]} {where}:/home/" 
+                        result = dorunrun(cmd, return_datatype = dict)
+                else:
+                    what = p[20][0][65]
+                    cmd = f"scp {what} {where}:/home/" 
+                    result = dorunrun(cmd, return_datatype = dict)
+    
     def snapshot() -> int:
         
         global parsertests
@@ -175,20 +181,20 @@ class FSM:
             this_parser = globals()[k]
             where = resolver.enum_keys_to_ints(SloppyTree(this_parser.parse(v)))
             p = resolver.resolver(this_parser.parse(v))
- 
-        hostnames = []
-        print(p)
-        lst = p[28][0][67]
-        for idx, host in enumerate(lst):
-            hostnames.append(lst[idx][64].hostname)
+            #print(where[28][0][19][67][64])
+        
+            hostnames = []
+            lst = p[28][0][67]
+            for idx, host in enumerate(lst):
+                hostnames.append(lst[idx][64].hostname)
 
-        if where[28][0][19][67][64] == "ws.gpu":
-            gpuview.fork_ssh(hostnames)
-            gpuview.wrapper(display_data)
-        else:
-            wsview.fork_ssh(hostnames)
-            wsview.wrapper(display_data)    
+            if where[28][0][19][67][64] == "ws.gpu":
+                gpuview.fork_ssh(hostnames)
+                gpuview.wrapper(gpuview.display_data)
+            else:
+                wsview.fork_ssh(hostnames)
+                wsview.wrapper(wsview.display_data)    
 
         return os.EX_OK
 
-    
+   

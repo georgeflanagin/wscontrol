@@ -395,7 +395,7 @@ def display_data(stdscr: object):
             pass
 
         #work around window resize
-        window2.timeout(60*1000)
+        window2.timeout(1000)
         k = window2.getch()
         if k == -1:
             pass

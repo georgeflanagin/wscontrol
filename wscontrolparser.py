@@ -243,7 +243,8 @@ def send_command():
     error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.FAIL})
     raise EndOfGenerator({OpCode.SEND : [fname, destination, error_action]})
 
-
+'''
+#below works 
 @lexeme
 @generate
 def snapshot_command():
@@ -256,6 +257,27 @@ def snapshot_command():
     target = yield context
     error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.RETRY})
     raise EndOfGenerator({OpCode.SNAPSHOT : [{OpCode.ON: target}, error_action]})
+'''
+
+@lexeme
+@generate
+def snapshot_command():
+    """
+    snapshot adam
+    snapshot ws.parish
+    """
+    yield WHITESPACE
+    yield snapshot
+    target = yield snapshot_gpu ^ context
+    error_action = yield optional(on_error_clause, {OpCode.ONERROR: OpCode.RETRY})
+    raise EndOfGenerator({OpCode.SNAPSHOT : [{OpCode.ON: target}, error_action]})
+
+@lexeme
+@generate
+def snapshot_gpu():
+    yield gpu
+    context = yield hostnames ^ hostname
+    raise EndOfGenerator({OpCode.GPU : context})    
 
 
 @lexeme
