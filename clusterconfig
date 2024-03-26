@@ -1,0 +1,9 @@
+Host spydur
+    Hostname spydur.richmond.edu
+    User installer
+
+Host spiderweb
+    Hostname spiderweb.richmond.edu
+    User installer
+
+

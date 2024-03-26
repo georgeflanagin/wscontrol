@@ -1,0 +1,12 @@
+Host newnas
+    Hostname 141.166.220.27
+    User root
+
+Host truenas
+    HostName 141.166.185.173
+    User root
+
+Host trueuser
+    Hostname 141.166.186.35
+    User root
+

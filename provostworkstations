@@ -1,0 +1,10 @@
+Host billieholiday
+    Hostname 141.166.177.118
+    User milesdavis
+
+Host badenpowell
+    Hostname 141.166.176.183
+
+Host lesteryoung
+    Hostname 141.166.212.54
+    User root

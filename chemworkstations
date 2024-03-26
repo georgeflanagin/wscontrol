@@ -1,0 +1,47 @@
+Host adam
+    HostName 141.166.220.72
+
+Host alexis
+    HostName alexis.richmond.edu
+
+Host anna
+    HostName anna.richmond.edu
+
+Host boyi
+    HostName 141.166.223.204
+
+Host camryn
+    Hostname 141.166.220.104
+
+Host cooper
+    HostName cooper.richmond.edu
+
+Host erica
+    Hostname 141.166.222.34
+
+Host evan 
+    Hostname evan.richmond.edu
+
+Host irene
+    HostName 141.166.223.221
+
+Host justin
+    HostName 141.166.223.213
+
+Host kevin
+    HostName kevin.richmond.edu
+
+
+Host mayer
+    Hostname 141.166.220.40
+
+Host michael
+    hostname 141.166.220.86
+
+Host sarah
+    HostName sarah.richmond.edu
+
+Host thais
+    HostName 141.166.220.41
+
+

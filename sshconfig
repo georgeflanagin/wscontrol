@@ -1,0 +1,44 @@
+#####################################################
+# SSH config file that bypasses DNS for all
+# hosts named in this file.
+#
+# Version 1.0 -- 22 December 2022 / George Flanagin.
+# Version 1.1 -- 23 December 2022 / George Flanagin.
+#       Updated with info from Greg Miller.
+# Version 2.0 -- 30 June 2023 / George Flanagin
+#       Updated with new hosts in the Chemistry Department.
+# Version 2.0 -- 10 July 2023 / George Flanagin
+#   Updated with recently built hosts in the chem dept.
+# Version 2.1 -- 18 Aug 2023 / George Flanagin
+#   Updated with empirically researched IP address.
+######################################################
+Include chemworkstations
+
+Include nasconfig
+
+# Include clusterconfig
+
+Include provostworkstations
+
+Host joseph
+    Hostname georgeflanagin.com
+    Port 22
+    IdentityFile ~/.ssh/OfficeKeys.pem
+    User ec2-user
+
+Host enterprise
+    Hostname enterprise.richmond.edu
+
+Host localhost
+    Hostname 127.0.0.1
+
+Host *
+    Port 22
+    User root
+    IdentitiesOnly yes
+    IdentityFile ~/.ssh/id_rsa
+    ConnectTimeout 2
+    ConnectionAttempts 2 
+    Compression yes
+    ServerAliveInterval 30
+    
